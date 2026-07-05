@@ -1,0 +1,179 @@
+---
+title: "Wallet Transfer"
+api: "POST /api/v1/transactions/wallet/transfer/"
+description: "Transfer funds from one wallet to another within the same application."
+---
+
+This endpoint allows for instant transfers of funds between two wallets within your application. You can identify the recipient using their username, phone number, or email address.
+
+### Request Body
+
+<ParamField body="sender_wallet_id" type="string" required>
+  The unique identifier of the wallet sending the funds.
+</ParamField>
+
+<ParamField body="recipient_identifier" type="string" required>
+  The identifier of the recipient user (username, phone number, or email).
+</ParamField>
+
+<ParamField body="amount" type="number" required>
+  The amount to transfer in the application's base currency.
+</ParamField>
+
+<ParamField body="description" type="string">
+  An optional description for the transfer (default: "Wallet transfer").
+</ParamField>
+
+### Response
+
+<ResponseField name="id" type="string">
+  The unique identifier for the transaction.
+</ResponseField>
+
+<ResponseField name="wallet_id" type="string">
+  The ID of the sender's wallet.
+</ResponseField>
+
+<ResponseField name="recipient_wallet_id" type="string">
+  The ID of the recipient's wallet.
+</ResponseField>
+
+<ResponseField name="amount" type="number">
+  The net amount transferred to the recipient.
+</ResponseField>
+
+<ResponseField name="currency" type="string">
+  The currency code (e.g., "USD").
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  The current status of the transaction (e.g., "completed").
+</ResponseField>
+
+<ResponseField name="application_fee" type="number">
+  The platform fee collected from the sender for this transfer.
+</ResponseField>
+
+<ResponseExample>
+
+```json 200
+{
+  "id": "trans_123abc...",
+  "wallet_id": "wall_sender_123...",
+  "recipient_wallet_id": "wall_recipient_789...",
+  "amount": 50.0,
+  "currency": "USD",
+  "transaction_type": "transfer",
+  "payment_method": "wallet",
+  "status": "completed",
+  "application_fee": 1.0,
+  "description": "Payment for services",
+  "created_at": "2025-01-16T10:05:00Z"
+}
+```
+
+```json 400
+{
+  "detail": "Insufficient funds. Required: $51.00 (including $1.00 application fee), Available: $45.00"
+}
+```
+
+```json 401
+{
+  "detail": "Missing or invalid API keys"
+}
+```
+
+```json 403
+{
+  "detail": "Transaction failed: Recipient account is disabled"
+}
+```
+
+```json 404
+{
+  "detail": "Recipient not found"
+}
+```
+
+</ResponseExample>
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://hpay-api.host-sl.com/api/v1/transactions/wallet/transfer/ \
+  --header 'api-key: YOUR_API_KEY' \
+  --header 'secret-key: YOUR_SECRET_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "sender_wallet_id": "wall_sender_123...",
+    "recipient_identifier": "recipient_username",
+    "amount": 50.00
+  }'
+```
+
+```python Python
+from hostpay import HostPay
+
+client = HostPay(api_key="YOUR_API_KEY", secret_key="YOUR_SECRET_KEY")
+
+transfer = client.transfers.create(
+    sender_wallet_id="wall_sender_123...",
+    recipient_identifier="recipient_username",
+    amount=50.00,
+)
+print(transfer["id"], transfer["status"])
+```
+
+```typescript TypeScript
+import { HostPay } from "@hostpay/sdk";
+
+const client = new HostPay({ apiKey: "YOUR_API_KEY", secretKey: "YOUR_SECRET_KEY" });
+
+const transfer = await client.transfers.create({
+  senderWalletId: "wall_sender_123...",
+  recipientIdentifier: "recipient_username",
+  amount: 50.0,
+});
+console.log(transfer.id, transfer.status);
+```
+
+```php PHP
+<?php
+
+$curl = curl_init();
+
+curl_setopt_array($curl, [
+  CURLOPT_URL => "https://hpay-api.host-sl.com/api/v1/transactions/wallet/transfer/",
+  CURLOPT_RETURNTRANSFER => true,
+  CURLOPT_ENCODING => "",
+  CURLOPT_MAXREDIRS => 10,
+  CURLOPT_TIMEOUT => 30,
+  CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+  CURLOPT_CUSTOMREQUEST => "POST",
+  CURLOPT_POSTFIELDS => json_encode([
+    'sender_wallet_id' => 'wall_sender_123...',
+    'recipient_identifier' => 'recipient_username',
+    'amount' => 50
+  ]),
+  CURLOPT_HTTPHEADER => [
+    "Content-Type: application/json",
+    "api-key: YOUR_API_KEY",
+    "secret-key: YOUR_SECRET_KEY"
+  ],
+]);
+
+$response = curl_exec($curl);
+$err = curl_error($curl);
+
+curl_close($curl);
+
+if ($err) {
+  echo "cURL Error #:" . $err;
+} else {
+  echo $response;
+}
+```
+
+</RequestExample>

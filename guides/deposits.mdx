@@ -1,0 +1,86 @@
+---
+title: "Accepting Deposits"
+description: "Learn how to accept payments and fund user wallets via Card and Mobile Money"
+---
+
+## Overview
+
+HOST Pay supports two primary methods for adding funds to user wallets: **Credit/Debit Cards** (via Stripe) and **Mobile Money** (via Monime). This guide explains how to implement both flows and handle the associated logic.
+
+## Deposit Methods
+
+<CardGroup cols={2}>
+  <Card title="Card Payments" icon="credit-card">
+    Global payments via Stripe. Supports Visa, Mastercard, and more.
+  </Card>
+  <Card title="Mobile Money" icon="mobile">
+    Local payments in Sierra Leone via Orange Money and Africell Money.
+  </Card>
+</CardGroup>
+
+---
+
+## 1. Card Deposits (Stripe)
+
+Card deposits use Stripe's secure infrastructure. The process involves creating a **Payment Intent** on the server and confirming it on the client side.
+
+### The Flow
+1. **Initialize**: Call the [Create Card Deposit](/api-reference/transactions/card-deposit) endpoint with the `wallet_id` and `amount`.
+2. **Authorize**: Use the `stripe_client_secret` returned in the response to initialize Stripe Elements or a mobile SDK.
+3. **Confirm**: The user completes the payment in your UI.
+4. **Finalize**: HOST Pay automatically listens for Stripe webhooks and credits the user's wallet upon successful payment.
+
+### Fee Handling
+Card deposits typically involve:
+- **Provider Fee**: Charged by Stripe (e.g., 2.9% + 30¢).
+- **Application Fee**: Your configured platform fee (set in the Dashboard).
+
+The `amount` you specify in the API request is the **net amount** the user receives in their wallet.
+
+---
+
+## 2. Mobile Money Deposits (Monime)
+
+For users in Sierra Leone, Mobile Money is the preferred method. These transactions are processed via Monime.
+
+### The Flow
+1. **Request**: Call the [Mobile Money Deposit](/api-reference/transactions/mobile-money-deposit) endpoint.
+2. **Push Notification**: The user receives a PIN prompt (USSD Push) on their phone.
+3. **Approval**: Once the user enters their PIN and approves, the funds are instantly deducted from their mobile money account.
+4. **Credit**: HOST Pay receives confirmation and credits the wallet immediately.
+
+### Currency Handling
+When a user initiates a mobile money deposit, they enter the amount in **Sierra Leone Leones (SLE)**.
+
+- **If Base Currency is SLE**: The wallet is credited with the exact SLE amount.
+- **If Base Currency is USD**: The system automatically converts the SLE amount to USD using the real-time exchange rate before crediting the wallet.
+
+See the [Currency & Conversions](/guides/currency-conversion) guide for more details.
+
+---
+
+## Best Practices
+
+### Webhooks
+Always implement [Webhooks](/webhooks/overview) to listen for `payment.succeeded` and `payment.failed` events. Do not rely solely on the client-side confirmation to update your own database or provide services to the user.
+
+### Idempotency
+Use `idempotency_key` (if supported by specific endpoints) or ensure your backend handles duplicate webhook events gracefully to prevent double-crediting wallets.
+
+### Error Handling
+Common deposit failures include:
+- **Insufficient Funds**: The user doesn't have enough in their card or mobile money account.
+- **Limit Exceeded**: The transaction exceeds Stripe or Mobile Money provider limits.
+- **User Cancellation**: The user explicitly cancels the USSD prompt or closes the Stripe checkout.
+- **Prepaid Balance Overdraft (Client-Managed)**: If your application is Client-Managed and your prepaid balance falls below the overdraft limit (default `-50.00`), all new deposits will be blocked immediately with a `403 Forbidden` response. Refer to the [Prepaid Billing Guide](/guides/billing) for details on topping up.
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Fee Configuration" icon="percentage" href="/api-reference/introduction">
+    Manage your application fees
+  </Card>
+  <Card title="Wallet Balances" icon="wallet" href="/guides/wallets">
+    Manage user wallet states
+  </Card>
+</CardGroup>

@@ -1,0 +1,91 @@
+---
+title: "List Subscriptions"
+api: "GET /api/v1/webhooks/subscriptions"
+description: "List all webhook subscriptions for your application."
+---
+
+Returns every subscription on your application. Signing secrets are never included — only a `secret_preview` for identification.
+
+### Response
+
+<ResponseField name="id" type="string">
+  The subscription ID.
+</ResponseField>
+
+<ResponseField name="target_url" type="string">
+  The HTTPS endpoint deliveries are sent to.
+</ResponseField>
+
+<ResponseField name="events" type="string[]">
+  The event types this subscription receives (see [Webhook events](/webhooks/events)).
+</ResponseField>
+
+<ResponseField name="active" type="boolean">
+  Whether deliveries are currently enabled.
+</ResponseField>
+
+<ResponseField name="ip_allowlist" type="string[] | null">
+  Optional source-IP allowlist enforced on delivery.
+</ResponseField>
+
+<ResponseField name="payload_version" type="string">
+  The payload schema version (e.g. `2025-01`).
+</ResponseField>
+
+<ResponseField name="secret_preview" type="string">
+  The last few characters of the signing secret, for identification only.
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  ISO 8601 creation timestamp.
+</ResponseField>
+
+<ResponseExample>
+
+```json 200
+[
+  {
+    "id": "7c1d2e3f-...",
+    "application_id": "2e35e07e-...",
+    "target_url": "https://example.com/webhooks/hostpay",
+    "events": ["deposit.completed", "payout.failed"],
+    "active": true,
+    "ip_allowlist": null,
+    "payload_version": "2025-01",
+    "secret_preview": "...k3Qz",
+    "created_at": "2026-07-04T10:30:00Z",
+    "updated_at": "2026-07-04T10:30:00Z"
+  }
+]
+```
+
+</ResponseExample>
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url https://hpay-api.host-sl.com/api/v1/webhooks/subscriptions \
+  --header 'api-key: YOUR_API_KEY' \
+  --header 'secret-key: YOUR_SECRET_KEY'
+```
+
+```python Python
+from hostpay import HostPay
+
+client = HostPay(api_key="YOUR_API_KEY", secret_key="YOUR_SECRET_KEY")
+
+for sub in client.webhooks.subscriptions.list():
+    print(sub["id"], sub["target_url"], sub["active"])
+```
+
+```typescript TypeScript
+import { HostPay } from "@hostpay/sdk";
+
+const client = new HostPay({ apiKey: "YOUR_API_KEY", secretKey: "YOUR_SECRET_KEY" });
+
+const subs = await client.webhooks.subscriptions.list();
+subs.forEach((s) => console.log(s.id, s.target_url, s.active));
+```
+
+</RequestExample>

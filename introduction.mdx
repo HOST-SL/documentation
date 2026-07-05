@@ -1,0 +1,292 @@
+---
+title: Introduction
+description: "Multi-tenant wallet infrastructure with schema isolation for Sierra Leone and beyond"
+---
+
+<img
+  className="block dark:hidden"
+  src="/images/hero-light.svg"
+  alt="HOST Pay — wallet and payment infrastructure with mobile money, cards, escrow, and webhooks"
+/>
+<img
+  className="hidden dark:block"
+  src="/images/hero-dark.svg"
+  alt="HOST Pay — wallet and payment infrastructure with mobile money, cards, escrow, and webhooks"
+/>
+
+## Welcome to HOST Pay
+
+HOST Pay is a **multi-tenant wallet infrastructure** that provides complete user wallet management, mobile money integration, and payment processing for businesses and developers. Each application gets its own **isolated database schema**, ensuring complete data separation and independent scaling.
+
+Whether you're building a fintech app, ride-hailing service, or marketplace in Sierra Leone, HOST Pay provides production-ready wallet infrastructure with built-in mobile money support via **Monime** and card payments via **Stripe**.
+
+## Two ways to run your application
+
+Every HOST Pay application runs in one of two modes. Both include wallets, transfers, escrow, fee management, webhooks, and full API access — and you can switch anytime.
+
+<CardGroup cols={2}>
+  <Card title="Platform-Managed" icon="wand-magic-sparkles">
+    **We handle everything.** Sign up, get your API keys, and start accepting
+    payments immediately — no Stripe or Monime account required. HOST Pay
+    processes card and mobile money payments on its own provider accounts,
+    handles compliance and disputes, and pays you out automatically.
+  </Card>
+  <Card title="Self-Managed Keys" icon="key">
+    **Bring your own keys.** Already have Stripe or Monime accounts? Provide
+    your own credentials and use HOST Pay as the wallet and transaction layer
+    on top. You keep full control of your payment provider relationship and
+    pay a lower platform fee.
+  </Card>
+</CardGroup>
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Get up and running in minutes with our quick start guide
+  </Card>
+  <Card title="SDKs" icon="cube" href="/sdks">
+    Official Python and TypeScript client libraries
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/introduction">
+    Explore our comprehensive API documentation
+  </Card>
+  <Card title="Webhooks" icon="webhook" href="/webhooks/overview">
+    Set up real-time event notifications
+  </Card>
+  <Card title="Testing" icon="flask" href="/guides/testing">
+    Learn how to test with our sandbox environment
+  </Card>
+</CardGroup>
+
+## Key Features
+
+<AccordionGroup>
+  <Accordion title="Schema-Based Multi-Tenancy">
+    Each application receives its own **isolated PostgreSQL schema** with complete data separation. Your users, wallets, and transactions never mix with other applications. Scale independently and maintain complete data sovereignty.
+  </Accordion>
+
+{" "}
+
+<Accordion title="Complete Wallet System">
+  Full wallet lifecycle management out of the box: - **Wallet creation** via
+  dedicated API endpoint - **Real-time balance tracking** with transaction
+  history - **Fund deposits** via mobile money or card - **Peer-to-peer
+  transfers** using username or phone number - **Withdrawals** to bank accounts
+  or mobile money - **Enable/disable controls** for security and compliance
+</Accordion>
+
+{" "}
+
+<Accordion title="Sierra Leone Mobile Money Integration">
+  Native integration with **Monime** for Sierra Leone's mobile money ecosystem:
+  - **Orange Money** (m17)
+  - **Africell Money** (m18)
+  Users enter amounts in **Sierra Leone Leones (SLE)** for mobile money deposits and withdrawals. The system automatically **converts to your application's base currency** (e.g., USD or SLE) using real-time exchange rates.
+  Automatic **USSD code generation** for seamless customer deposits.
+  Test mode uses Mock Monime for development without real money.
+</Accordion>
+
+{" "}
+
+<Accordion title="User Management">
+  Complete user lifecycle management: - Create users via API - Support for
+  email, username, and phone number - Create wallets for users via dedicated
+  endpoint - **Configurable wallet balances** (USD, SLE, etc.) - Link to Stripe
+  Connect for payouts - User enable/disable with cascading wallet control
+</Accordion>
+
+{" "}
+
+<Accordion title="Instant Peer-to-Peer Transfers">
+  Enable wallet-to-wallet transfers with: - **Username or phone lookup** - no
+  need for wallet IDs - **Self-transfer prevention** and balance validation -
+  **Configurable transfer limits** (daily/monthly) - **Automatic fee
+  calculation** and deduction
+</Accordion>
+
+{" "}
+
+<Accordion title="Application Fee System">
+  Built-in monetization with **automatic fee collection**: - **Percentage-based
+  fees** per transaction type - **Dedicated application wallets** for fee
+  collection - **Real-time fee analytics** and reporting - **Complete
+  transparency** - fees shown before transactions
+</Accordion>
+
+{" "}
+
+<Accordion title="Dual Mode Testing">
+  Every application gets **separate Test and Live environments**: -
+  **Independent schemas** for test and production data - **Mock Monime service**
+  for testing mobile money flows - **Stripe test mode** for card payment testing
+  - **Full API access** in both modes
+</Accordion>
+
+{" "}
+
+<Accordion title="Real-time Webhook System">
+  Stay synchronized with **event-driven webhooks**: - Transaction status updates
+  (pending → completed → failed) - Deposit, transfer, and payout events - **HMAC
+  signature verification** for security - **Automatic retry logic** for failed
+  deliveries
+</Accordion>
+
+  <Accordion title="SMS Notifications">
+    Keep users informed with **automated SMS alerts**:
+    - **Transaction confirmations** for deposits, transfers, and withdrawals
+    - **Customizable message templates** with application branding
+  </Accordion>
+</AccordionGroup>
+
+## Use Cases
+
+<CardGroup cols={3}>
+  <Card title="Mobile Money Wallets" icon="wallet">
+    Launch digital wallet apps with mobile money integration for Sierra Leone
+  </Card>
+  <Card title="Ride-Hailing Services" icon="car">
+    Wallet-based payments for drivers and riders with instant transfers
+  </Card>
+  <Card title="Remittance Platforms" icon="money-bill-transfer">
+    Send money between users using phone numbers with mobile money cashout
+  </Card>
+  <Card title="E-commerce" icon="shopping-cart">
+    Accept card and mobile money payments with customer wallet management
+  </Card>
+  <Card title="Marketplaces" icon="store">
+    Split payments between vendors and handle automated payouts
+  </Card>
+  <Card title="Microfinance Apps" icon="hand-holding-dollar">
+    Loan disbursement and repayment via digital wallets
+  </Card>
+  <Card title="Agent Banking" icon="building-columns">
+    Enable agents to process deposits and withdrawals for customers
+  </Card>
+  <Card title="Gaming Platforms" icon="gamepad">
+    In-game currency management and player-to-player item trading
+  </Card>
+  <Card title="Gig Economy" icon="briefcase">
+    Instant payments to freelancers and service providers
+  </Card>
+</CardGroup>
+
+## Why Choose HOST Pay?
+
+<AccordionGroup>
+  <Accordion title="No Infrastructure Setup Required">
+    Skip months of development. HOST Pay provides production-ready wallet infrastructure with user management, transaction processing, mobile money integration, and webhooks out of the box. Focus on your product, not payment plumbing.
+  </Accordion>
+
+{" "}
+
+<Accordion title="True Multi-Tenancy with Schema Isolation">
+  Each application gets its own PostgreSQL schema with complete data separation.
+  Your customer data never mixes with other applications. Scale independently,
+  backup selectively, and maintain compliance with data sovereignty
+  requirements.
+</Accordion>
+
+{" "}
+
+<Accordion title="Built for Sierra Leone's Mobile Money Market">
+  Native Monime integration means your users can deposit and withdraw using
+  **Orange Money**, **Africell Money**, and **QMoney** with automatic USSD code
+  generation. No need to integrate with each provider separately.
+</Accordion>
+
+{" "}
+
+<Accordion title="Complete Wallet Lifecycle">
+  From user registration to wallet funding, peer-to-peer transfers, and cashouts
+  - every feature you need is already built. Support username-based transfers,
+  balance tracking, transaction history, and enable/disable controls.
+</Accordion>
+
+{" "}
+
+<Accordion title="Built-in Revenue Model">
+  The application fee system is baked in. Configure percentage-based fees per
+  transaction type, and HOST Pay automatically collects and tracks your revenue.
+  Get real-time analytics on fee collection and top users.
+</Accordion>
+
+  <Accordion title="Test Without Risk">
+    Every application gets separate Test and Live schemas. Use Mock Monime to simulate mobile money flows, Stripe test cards for card payments, and test the complete user journey before going live.
+  </Accordion>
+</AccordionGroup>
+
+## What's Next?
+
+<Steps>
+  <Step title="Register Your Application">
+    Sign up for HOST Pay and register your first application. Choose
+    **Platform-Managed** to use HOST Pay's built-in payment providers, or
+    provide your own Stripe and Monime credentials for a **Self-Managed**
+    setup. Either way, your application receives an isolated database schema
+  </Step>
+  <Step title="Get API Credentials">
+    Generate Test Mode credentials (API key + Secret key) for your schema
+  </Step>
+  <Step title="Create Users and Wallets">
+    Create a user via API, then create a wallet for that user using the wallet
+    creation endpoint
+  </Step>
+  <Step title="Test Deposits">
+    Test card deposits using Stripe test cards and mobile money deposits using
+    the Mock Monime service in Test Mode
+  </Step>
+  <Step title="Process Peer-to-Peer Transfers">
+    Test wallet-to-wallet transfers using usernames or phone numbers
+  </Step>
+  <Step title="Go Live">
+    Generate Live Mode credentials to start processing real payments.
+    **Platform-Managed** apps go live on HOST Pay's built-in providers with no
+    extra setup; **Self-Managed** apps switch to their own live Stripe and
+    Monime credentials
+  </Step>
+</Steps>
+
+## Technical Highlights
+
+<CardGroup cols={2}>
+  <Card title="FastAPI Backend" icon="bolt">
+    High-performance async Python API with automatic OpenAPI documentation and
+    validation
+  </Card>
+  <Card title="PostgreSQL Multi-Tenancy" icon="database">
+    Schema-per-tenant architecture with SQLModel ORM for type-safe database
+    operations
+  </Card>
+  <Card title="Dual Payment Integration" icon="credit-card">
+    **Stripe** for international card payments and **Monime** for Sierra Leone
+    mobile money
+  </Card>
+  <Card title="Webhook-Driven" icon="webhook">
+    Event-driven architecture with real-time notifications for all transaction
+    state changes
+  </Card>
+  <Card title="RESTful API Design" icon="code">
+    Comprehensive REST endpoints for users, wallets, and transactions
+  </Card>
+  <Card title="Built-in Analytics" icon="chart-line">
+    Real-time transaction analytics, fee reporting, and user activity tracking
+  </Card>
+  <Card title="SMS Notifications" icon="message">
+    Automated SMS alerts for transactions with customizable templates
+  </Card>
+</CardGroup>
+
+**Currency Support**: Configurable base currency (USD, SLE, etc.) with automatic SLE conversion for mobile money transactions  
+**API Versioning**: `/api/v1/` with semantic versioning  
+**Authentication**: API Key + Secret Key per application credential  
+**Rate Limiting**: Redis-backed rate limiting with endpoint-specific limits (10/min default)
+
+## Need Help?
+
+<CardGroup cols={2}>
+  <Card title="Support" icon="life-ring" href="mailto:host.sl.co@gmail.com">
+    Contact our support team
+  </Card>
+  <Card title="GitHub" icon="github" href="https://github.com/hostpay">
+    View our GitHub organization
+  </Card>
+</CardGroup>

@@ -1,0 +1,86 @@
+---
+title: "Wallet Transfers"
+description: "Instant internal funds transfer within your application"
+---
+
+## Overview
+
+Wallet-to-Wallet Transfers are the core of HOST Pay's peer-to-peer capabilities. They allow for instant movement of funds between any two wallets managed by the same application with zero latency.
+
+## Key Features
+
+- **Instant Settlement**: Funds are moved between wallets as soon as the request is processed.
+- **Multiple Identifiers**: Recipient identification can be done via their unique `username`, `phone_number`, or `email`.
+- **Atomic Transactions**: Transfers are atomic; either both wallets are updated, or neither is.
+- **Custom Metadata**: Attach descriptions and metadata to each transfer for record-keeping.
+
+---
+
+## The Transfer Flow
+
+To perform a transfer, use the [Wallet Transfer](/api-reference/transactions/transfer) endpoint.
+
+### Step 1: Identify the Sender
+The `sender_wallet_id` is required. Ensure the sender has a sufficient balance, including any applicable fees.
+
+### Step 2: Identify the Recipient
+The recipient can be identified using a single string `recipient_identifier`. The system will search for a match in this order:
+1. **Username**
+2. **Phone Number** (E.164 format recommended)
+3. **Email Address**
+
+### Step 3: Specify the Amount
+The amount must be in the application's **base currency** (e.g., USD or SLE — whichever your application is configured for). Internal transfers never involve currency conversion. For more on how currencies work, see the [Currency & Conversions](/guides/currency-conversion) guide.
+
+---
+
+## Fees
+
+The platform allows you to configure a **Transfer Fee** percentage. This fee is automatically deducted from the sender's wallet in addition to the transfer amount.
+
+> [!NOTE]
+> If a sender attempts to transfer 100 units and your fee is 1%, the sender must have at least 101 units available in their wallet's base currency.
+
+---
+
+## Implementation Example
+
+```javascript JavaScript
+const options = {
+  method: 'POST',
+  headers: {
+    'api-key': 'YOUR_API_KEY',
+    'secret-key': 'YOUR_SECRET_KEY',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    sender_wallet_id: 'wall_sender_123',
+    recipient_identifier: '+23279123456',
+    amount: 50.00,
+    description: "Dinner split"
+  })
+};
+
+fetch('https://hpay-api.host-sl.com/api/v1/transactions/wallet/transfer/', options)
+  .then(response => response.json())
+  .then(data => console.log('Transfer complete:', data));
+```
+
+---
+
+## Security Considerations
+
+- **Server-to-Server**: Always perform transfers from your backend. Never expose your `secret-key` to the frontend.
+- **Wallet Locking**: The system handles concurrent transactions by locking wallets during the transfer process to prevent double spending.
+- **Enabled Status**: Both the sender and recipient wallets must be in an `active` state for the transfer to succeed.
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Escrow Control" icon="shield-check" href="/guides/escrow">
+    Hold funds until conditions are met
+  </Card>
+  <Card title="Webhooks" icon="webhook" href="/webhooks/overview">
+    Listen for transfer events
+  </Card>
+</CardGroup>

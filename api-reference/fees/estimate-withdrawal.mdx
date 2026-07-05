@@ -1,0 +1,105 @@
+---
+title: "Estimate Withdrawal Fees"
+api: "POST /api/v1/fees/estimate/withdrawal"
+description: "Preview the fees for a payout or cashout before creating it."
+---
+
+Returns the full fee breakdown for a prospective withdrawal — application fee, estimated provider fees, the total the payer would pay, and the net amount credited — without moving any money. Show it to users before they confirm.
+
+### Request Body
+
+<ParamField body="amount" type="number" required>
+  The withdrawal amount to estimate, in the application's base currency. Must be greater than 0.
+</ParamField>
+
+<ParamField body="payment_method" type="string" required>
+  One of `mobile_money`, `card`, `bank`, or `wallet`.
+</ParamField>
+
+### Response
+
+<ResponseField name="transaction_type" type="string">
+  The estimated transaction type.
+</ResponseField>
+
+<ResponseField name="payment_method" type="string">
+  The payment method the estimate was computed for.
+</ResponseField>
+
+<ResponseField name="fee_enabled" type="boolean">
+  Whether your application fee applies to this transaction type.
+</ResponseField>
+
+<ResponseField name="fee_breakdown" type="object">
+  The line items: `transaction_amount`, `application_fee`, estimated provider fees, `total_fees`, `total_amount_to_pay`, and `net_amount`.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Human-readable summary of the estimate.
+</ResponseField>
+
+<ResponseExample>
+
+```json 200
+{
+  "transaction_type": "withdrawal",
+  "payment_method": "mobile_money",
+  "fee_enabled": true,
+  "fee_breakdown": {
+    "transaction_amount": "100.00",
+    "application_fee": "1.00",
+    "total_fees": "1.00",
+    "total_amount_to_pay": "101.00",
+    "net_amount": "100.00"
+  },
+  "message": "Fee estimate calculated."
+}
+```
+
+```json 401
+{
+  "detail": "Invalid credentials"
+}
+```
+
+```json 422
+{
+  "detail": "Input should be greater than 0"
+}
+```
+
+</ResponseExample>
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://hpay-api.host-sl.com/api/v1/fees/estimate/withdrawal \
+  --header 'api-key: YOUR_API_KEY' \
+  --header 'secret-key: YOUR_SECRET_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "amount": 50,
+    "payment_method": "mobile_money"
+  }'
+```
+
+```python Python
+from hostpay import HostPay
+
+client = HostPay(api_key="YOUR_API_KEY", secret_key="YOUR_SECRET_KEY")
+
+estimate = client.fees.estimate_withdrawal(amount=50, payment_method="mobile_money")
+print(estimate["fee_breakdown"]["net_amount"])
+```
+
+```typescript TypeScript
+import { HostPay } from "@hostpay/sdk";
+
+const client = new HostPay({ apiKey: "YOUR_API_KEY", secretKey: "YOUR_SECRET_KEY" });
+
+const estimate = await client.fees.estimateWithdrawal({ amount: 50, paymentMethod: "mobile_money" });
+console.log(estimate.fee_breakdown.net_amount);
+```
+
+</RequestExample>

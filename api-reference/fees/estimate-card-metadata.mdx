@@ -1,0 +1,95 @@
+---
+title: "Card-Aware Deposit Estimate"
+api: "POST /api/v1/fees/estimate/deposit/card-metadata"
+description: "Estimate deposit fees using the actual card's country and brand, from a Stripe payment method."
+---
+
+Like [estimate deposit](/api-reference/fees/estimate-deposit), but inspects the real card behind a Stripe `payment_method_id` to pick the domestic or international rate automatically — no guessing `is_international`.
+
+### Request Body
+
+<ParamField body="payment_method_id" type="string" required>
+  The Stripe payment method ID (`pm_...`) of the card to estimate for.
+</ParamField>
+
+<ParamField body="amount" type="number" required>
+  The deposit amount to estimate. Must be greater than 0.
+</ParamField>
+
+### Response
+
+<ResponseField name="fee_enabled" type="boolean">
+  Whether your application fee applies to deposits.
+</ResponseField>
+
+<ResponseField name="card_metadata" type="object">
+  The detected card details (brand, country, funding) used for the estimate.
+</ResponseField>
+
+<ResponseField name="fee_breakdown" type="object">
+  The line items: `transaction_amount`, `application_fee`, `estimated_stripe_fee`, `total_fees`, `total_amount_to_pay`, and `net_amount`.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Human-readable summary of the estimate.
+</ResponseField>
+
+<ResponseExample>
+
+```json 200
+{
+  "fee_enabled": true,
+  "card_metadata": { "brand": "visa", "country": "SL", "funding": "debit" },
+  "fee_breakdown": {
+    "transaction_amount": "75.00",
+    "application_fee": "0.75",
+    "estimated_stripe_fee": "2.18",
+    "total_fees": "2.93",
+    "total_amount_to_pay": "77.93",
+    "net_amount": "75.00"
+  },
+  "message": "Fee estimate calculated from card metadata."
+}
+```
+
+```json 401
+{
+  "detail": "Invalid credentials"
+}
+```
+
+</ResponseExample>
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://hpay-api.host-sl.com/api/v1/fees/estimate/deposit/card-metadata \
+  --header 'api-key: YOUR_API_KEY' \
+  --header 'secret-key: YOUR_SECRET_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "payment_method_id": "pm_...",
+    "amount": 75
+  }'
+```
+
+```python Python
+from hostpay import HostPay
+
+client = HostPay(api_key="YOUR_API_KEY", secret_key="YOUR_SECRET_KEY")
+
+estimate = client.fees.estimate_card_metadata(payment_method_id="pm_...", amount=75)
+print(estimate["fee_breakdown"]["total_amount_to_pay"])
+```
+
+```typescript TypeScript
+import { HostPay } from "@hostpay/sdk";
+
+const client = new HostPay({ apiKey: "YOUR_API_KEY", secretKey: "YOUR_SECRET_KEY" });
+
+const estimate = await client.fees.estimateCardMetadata({ paymentMethodId: "pm_...", amount: 75 });
+console.log(estimate.fee_breakdown.total_amount_to_pay);
+```
+
+</RequestExample>

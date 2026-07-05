@@ -1,0 +1,147 @@
+---
+title: "Stripe Payout"
+api: "POST /api/v1/transactions/wallet/payout/"
+description: "Withdraw funds from a wallet to a bank account or debit card via Stripe Connect."
+---
+
+This endpoint allows users to withdraw funds from their wallet to their linked bank account or debit card. This process uses Stripe Connect to securely transfer funds.
+
+### Request Body
+
+<ParamField body="wallet_id" type="string" required>
+  The unique identifier of the wallet to withdraw funds from.
+</ParamField>
+
+<ParamField body="amount" type="number" required>
+  The amount to withdraw.
+</ParamField>
+
+<ParamField body="currency" type="string" default="usd">
+  The currency code for the payout. Optional; defaults to `usd`.
+</ParamField>
+
+<ParamField body="description" type="string" default="Wallet withdrawal">
+  An optional description for the payout.
+</ParamField>
+
+### Response
+
+<ResponseField name="id" type="string">
+  The unique identifier for the transaction.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  The current status of the transaction (e.g., "pending", "completed", "failed").
+</ResponseField>
+
+<ResponseField name="amount" type="number">
+  The amount being withdrawn.
+</ResponseField>
+
+<ResponseField name="currency" type="string">
+  The currency of the withdrawal.
+</ResponseField>
+
+<ResponseField name="stripe_fee" type="number">
+  The fee charged by Stripe for the payout.
+</ResponseField>
+
+<ResponseField name="application_fee" type="number">
+  The platform fee collected for this withdrawal.
+</ResponseField>
+
+<ResponseExample>
+
+```json 200
+{
+  "id": "trans_456def...",
+  "wallet_id": "wall_789xyz...",
+  "amount": 100.0,
+  "currency": "USD",
+  "transaction_type": "withdrawal",
+  "payment_method": "bank",
+  "status": "pending",
+  "stripe_fee": 2.5,
+  "application_fee": 1.0,
+  "description": "Stripe Payout (100.0 USD)",
+  "created_at": "2025-01-16T11:00:00Z"
+}
+```
+
+</ResponseExample>
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://hpay-api.host-sl.com/api/v1/transactions/wallet/payout/ \
+  --header 'api-key: YOUR_API_KEY' \
+  --header 'secret-key: YOUR_SECRET_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "wallet_id": "wall_789xyz...",
+    "amount": 100.00,
+    "currency": "USD"
+  }'
+```
+
+```python Python
+from hostpay import HostPay
+
+client = HostPay(api_key="YOUR_API_KEY", secret_key="YOUR_SECRET_KEY")
+
+payout = client.payouts.bank(
+    wallet_id="wall_789xyz...",
+    amount=100.00,
+    currency="USD",
+)
+print(payout["id"], payout["status"])
+```
+
+```typescript TypeScript
+import { HostPay } from "@hostpay/sdk";
+
+const client = new HostPay({ apiKey: "YOUR_API_KEY", secretKey: "YOUR_SECRET_KEY" });
+
+const payout = await client.payouts.bank({
+  walletId: "wall_789xyz...",
+  amount: 100.0,
+  currency: "USD",
+});
+console.log(payout.id, payout.status);
+```
+
+```php PHP
+<?php
+
+$curl = curl_init();
+
+curl_setopt_array($curl, [
+  CURLOPT_URL => "https://hpay-api.host-sl.com/api/v1/transactions/wallet/payout/",
+  CURLOPT_RETURNTRANSFER => true,
+  CURLOPT_CUSTOMREQUEST => "POST",
+  CURLOPT_POSTFIELDS => json_encode([
+    'wallet_id' => 'wall_789xyz...',
+    'amount' => 100,
+    'currency' => 'USD'
+  ]),
+  CURLOPT_HTTPHEADER => [
+    "Content-Type: application/json",
+    "api-key: YOUR_API_KEY",
+    "secret-key: YOUR_SECRET_KEY"
+  ],
+]);
+
+$response = curl_exec($curl);
+$err = curl_error($curl);
+
+curl_close($curl);
+
+if ($err) {
+  echo "cURL Error #:" . $err;
+} else {
+  echo $response;
+}
+```
+
+</RequestExample>

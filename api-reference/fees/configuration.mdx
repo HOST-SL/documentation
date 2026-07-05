@@ -1,0 +1,103 @@
+---
+title: "Fee Configuration"
+api: "GET /api/v1/fees/configuration"
+description: "The raw fee configuration for your application: percentages and per-transaction-type toggles."
+---
+
+Returns the underlying fee configuration values — the machine-readable counterpart of the [fee summary](/api-reference/fees/summary).
+
+### Response
+
+<ResponseField name="application_id" type="string">
+  Your application's ID.
+</ResponseField>
+
+<ResponseField name="transaction_fee_percentage" type="string">
+  Your application fee percentage applied to fee-enabled transaction types.
+</ResponseField>
+
+<ResponseField name="escrow_fee_percentage" type="string">
+  Fee percentage applied when escrow funds are released.
+</ResponseField>
+
+<ResponseField name="fee_on_deposit" type="boolean">
+  Whether the application fee is charged on deposits.
+</ResponseField>
+
+<ResponseField name="fee_on_transfer" type="boolean">
+  Whether the application fee is charged on transfers.
+</ResponseField>
+
+<ResponseField name="fee_on_withdrawal" type="boolean">
+  Whether the application fee is charged on withdrawals.
+</ResponseField>
+
+<ResponseField name="stripe_fee_estimate_percentage" type="string">
+  Estimated Stripe processing fee for domestic cards.
+</ResponseField>
+
+<ResponseField name="stripe_intl_fee_estimate_percentage" type="string">
+  Estimated Stripe processing fee for international cards.
+</ResponseField>
+
+<ResponseField name="always_use_intl_estimate" type="boolean">
+  If true, card estimates always use the international rate.
+</ResponseField>
+
+<ResponseField name="monime_fee_estimate_percentage" type="string">
+  Estimated Monime (mobile money) processing fee.
+</ResponseField>
+
+<ResponseExample>
+
+```json 200
+{
+  "application_id": "2e35e07e-...",
+  "transaction_fee_percentage": "1.0",
+  "escrow_fee_percentage": "0.0",
+  "fee_on_deposit": false,
+  "fee_on_transfer": true,
+  "fee_on_withdrawal": false,
+  "stripe_fee_estimate_percentage": "2.9",
+  "stripe_intl_fee_estimate_percentage": "3.9",
+  "always_use_intl_estimate": false,
+  "monime_fee_estimate_percentage": "1.5"
+}
+```
+
+```json 401
+{
+  "detail": "Invalid credentials"
+}
+```
+
+</ResponseExample>
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url https://hpay-api.host-sl.com/api/v1/fees/configuration \
+  --header 'api-key: YOUR_API_KEY' \
+  --header 'secret-key: YOUR_SECRET_KEY'
+```
+
+```python Python
+from hostpay import HostPay
+
+client = HostPay(api_key="YOUR_API_KEY", secret_key="YOUR_SECRET_KEY")
+
+config = client.fees.configuration()
+print(config["transaction_fee_percentage"])
+```
+
+```typescript TypeScript
+import { HostPay } from "@hostpay/sdk";
+
+const client = new HostPay({ apiKey: "YOUR_API_KEY", secretKey: "YOUR_SECRET_KEY" });
+
+const config = await client.fees.configuration();
+console.log(config.transaction_fee_percentage);
+```
+
+</RequestExample>

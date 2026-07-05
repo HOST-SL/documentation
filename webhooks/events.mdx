@@ -1,0 +1,103 @@
+---
+title: "Webhook Events"
+description: "Event types HOST Pay emits and how to subscribe to them"
+---
+
+HOST Pay sends webhooks for the following events. You can subscribe to individual events or use wildcards (e.g., `payment.*`) to receive all events in a group.
+
+## Event Types
+
+### Payment Events
+
+| Event                  | Description                                        |
+| ---------------------- | -------------------------------------------------- |
+| `payment.created`      | A payment transaction has been initiated           |
+| `payment.processing`   | The payment is being processed by the provider     |
+| `payment.succeeded`    | The payment was successfully completed             |
+| `payment.failed`       | The payment could not be completed                 |
+
+### Transfer Events
+
+| Event                  | Description                                        |
+| ---------------------- | -------------------------------------------------- |
+| `transfer.created`     | A wallet-to-wallet transfer has been initiated     |
+| `transfer.succeeded`   | The transfer completed successfully                |
+| `transfer.failed`      | The transfer could not be completed                |
+
+### Payout Events
+
+| Event                  | Description                                        |
+| ---------------------- | -------------------------------------------------- |
+| `payout.created`       | A payout request has been created                  |
+| `payout.succeeded`     | The payout was successfully settled                |
+| `payout.failed`        | The payout could not be processed                  |
+
+### Wallet Events
+
+| Event                     | Description                                     |
+| ------------------------- | ----------------------------------------------- |
+| `wallet.balance.updated`  | A wallet's balance has changed                  |
+| `wallet.fee.applied`      | A fee has been deducted from a wallet           |
+
+### Transaction Lifecycle Events
+
+| Event                       | Description                                    |
+| --------------------------- | ---------------------------------------------- |
+| `transaction.created`       | A new transaction record has been created      |
+| `transaction.updated`       | A transaction's status or data has changed     |
+| `transaction.reconciled`    | A transaction has been reconciled              |
+
+### Escrow Events
+
+| Event              | Description                                          |
+| ------------------ | ---------------------------------------------------- |
+| `escrow.held`      | Funds were held from a wallet into escrow            |
+| `escrow.released`  | Held escrow funds were released to a recipient       |
+| `escrow.refunded`  | Held escrow funds were refunded to the sender        |
+
+### Dispute Events
+
+| Event              | Description                                                     |
+| ------------------ | --------------------------------------------------------------- |
+| `dispute.created`  | A card payment was disputed (chargeback); funds held by Stripe  |
+| `dispute.closed`   | A dispute was resolved — see `dispute_status` (`won` / `lost`)  |
+
+### System & Admin Events
+
+| Event                            | Description                                   |
+| -------------------------------- | --------------------------------------------- |
+| `webhook.secret.rotated`         | Your webhook signing secret was rotated       |
+| `webhook.subscription.enabled`   | A webhook subscription was activated          |
+| `webhook.subscription.disabled`  | A webhook subscription was deactivated        |
+| `account.updated`                | Your application account was updated          |
+| `test.ping`                      | A test event to verify your endpoint          |
+
+## Subscribing to Events
+
+You can subscribe to specific events or use wildcard patterns:
+
+| Pattern          | Events Received                              |
+| ---------------- | -------------------------------------------- |
+| `payment.*`      | All payment events                           |
+| `payout.*`       | All payout events                            |
+| `transfer.*`     | All transfer events                          |
+| `wallet.*`       | All wallet state change events               |
+| `transaction.*`  | All transaction lifecycle events             |
+| `escrow.*`       | All escrow lifecycle events                  |
+| `dispute.*`      | All card dispute / chargeback events          |
+| `*`              | Every event emitted by the platform          |
+
+<Note>
+  The event type itself (`payment.succeeded`, `payout.failed`, etc.) is carried in the delivery headers, not an `event` field in the body. See [Overview](/webhooks/overview) for the full payload structure.
+</Note>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Security" icon="shield-halved" href="/webhooks/security">
+    Verify webhook signatures before processing events
+  </Card>
+  <Card title="Testing" icon="flask" href="/webhooks/testing">
+    Validate your endpoint before going live
+  </Card>
+</CardGroup>

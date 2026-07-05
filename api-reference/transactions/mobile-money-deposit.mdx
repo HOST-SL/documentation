@@ -1,0 +1,170 @@
+---
+title: "Mobile Money Deposit"
+api: "POST /api/v1/transactions/wallet/mobile-money-deposit"
+description: "Initiate a wallet deposit using mobile money (Monime)."
+---
+
+This endpoint initiates a mobile money deposit to a user's wallet via Monime. It generates a payment code that the user can use to complete the deposit through their mobile money provider (e.g., Orange Money, Africell Money).
+
+### Request Body
+
+<ParamField body="wallet_id" type="string" required>
+  The unique identifier of the wallet to deposit funds into.
+</ParamField>
+
+<ParamField body="amount" type="integer" required>
+  The amount to deposit in **SLE cents** (e.g., 1000 for 10.00 SLE).
+</ParamField>
+
+### Response
+
+<ResponseField name="transaction_id" type="string">
+  The unique identifier for the transaction in HOST Pay.
+</ResponseField>
+
+<ResponseField name="payment_code" type="object">
+  The full response from the Monime service, including the generated payment code and instructions.
+</ResponseField>
+
+<ResponseField name="transaction" type="object">
+  The transaction record details.
+  <Expandable title="Transaction Object">
+    <ResponseField name="id" type="string">Transaction ID</ResponseField>
+    <ResponseField name="amount" type="number">Deposit amount in SLE cents</ResponseField>
+    <ResponseField name="currency" type="string">"SLE"</ResponseField>
+    <ResponseField name="status" type="string">Transaction status</ResponseField>
+    <ResponseField name="total_amount_paid" type="number">Total amount in SLE including fees</ResponseField>
+    <ResponseField name="monime_fee" type="number">Estimated Monime fee</ResponseField>
+    <ResponseField name="application_fee" type="number">Platform application fee</ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseExample>
+
+```json 200
+{
+  "transaction_id": "trans_123abc...",
+  "payment_code": {
+    "status": "success",
+    "result": {
+      "id": "monime_code_123",
+      "code": "123456",
+      "amount": 1050,
+      "currency": "SLE",
+      "instructions": "Dial *123# and enter code 123456"
+    }
+  },
+  "transaction": {
+    "id": "trans_123abc...",
+    "wallet_id": "wall_789xyz...",
+    "amount": 1000,
+    "currency": "SLE",
+    "status": "pending",
+    "total_amount_paid": 10.5,
+    "monime_fee": 0.3,
+    "application_fee": 0.2
+  }
+}
+```
+
+```json 400
+{
+  "detail": "Error creating payment code: Provider error message"
+}
+```
+
+```json 401
+{
+  "detail": "Missing or invalid API keys"
+}
+```
+
+```json 403
+{
+  "detail": "Transaction failed: Wallet is disabled"
+}
+```
+
+```json 404
+{
+  "detail": "Wallet not found"
+}
+```
+
+</ResponseExample>
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://hpay-api.host-sl.com/api/v1/transactions/wallet/mobile-money-deposit \
+  --header 'api-key: YOUR_API_KEY' \
+  --header 'secret-key: YOUR_SECRET_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "wallet_id": "wall_789xyz...",
+    "amount": 1000
+  }'
+```
+
+```python Python
+from hostpay import HostPay
+
+client = HostPay(api_key="YOUR_API_KEY", secret_key="YOUR_SECRET_KEY")
+
+deposit = client.deposits.mobile_money(
+    wallet_id="wall_789xyz...",
+    amount=1000,
+)
+print(deposit["transaction_id"])
+```
+
+```typescript TypeScript
+import { HostPay } from "@hostpay/sdk";
+
+const client = new HostPay({ apiKey: "YOUR_API_KEY", secretKey: "YOUR_SECRET_KEY" });
+
+const deposit = await client.deposits.mobileMoney({
+  walletId: "wall_789xyz...",
+  amount: 1000,
+});
+console.log(deposit.transaction_id);
+```
+
+```php PHP
+<?php
+
+$curl = curl_init();
+
+curl_setopt_array($curl, [
+  CURLOPT_URL => "https://hpay-api.host-sl.com/api/v1/transactions/wallet/mobile-money-deposit",
+  CURLOPT_RETURNTRANSFER => true,
+  CURLOPT_ENCODING => "",
+  CURLOPT_MAXREDIRS => 10,
+  CURLOPT_TIMEOUT => 30,
+  CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+  CURLOPT_CUSTOMREQUEST => "POST",
+  CURLOPT_POSTFIELDS => json_encode([
+    'wallet_id' => 'wall_789xyz...',
+    'amount' => 1000
+  ]),
+  CURLOPT_HTTPHEADER => [
+    "Content-Type: application/json",
+    "api-key: YOUR_API_KEY",
+    "secret-key: YOUR_SECRET_KEY"
+  ],
+]);
+
+$response = curl_exec($curl);
+$err = curl_error($curl);
+
+curl_close($curl);
+
+if ($err) {
+  echo "cURL Error #:" . $err;
+} else {
+  echo $response;
+}
+```
+
+</RequestExample>

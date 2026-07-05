@@ -1,0 +1,54 @@
+---
+title: "Delete Subscription"
+api: "DELETE /api/v1/webhooks/subscriptions/{subscription_id}"
+description: "Permanently delete a webhook subscription."
+---
+
+Deletes the subscription and stops all deliveries to its endpoint. To pause deliveries temporarily instead, [update](/api-reference/webhooks/update-subscription) it with `active: false`.
+
+### Path Parameters
+
+<ParamField path="subscription_id" type="string" required>
+  The subscription to delete.
+</ParamField>
+
+### Response
+
+Returns `204 No Content` on success.
+
+<ResponseExample>
+
+```json 404
+{
+  "detail": "Subscription not found"
+}
+```
+
+</ResponseExample>
+
+<RequestExample>
+
+```bash cURL
+curl --request DELETE \
+  --url https://hpay-api.host-sl.com/api/v1/webhooks/subscriptions/7c1d2e3f-... \
+  --header 'api-key: YOUR_API_KEY' \
+  --header 'secret-key: YOUR_SECRET_KEY'
+```
+
+```python Python
+from hostpay import HostPay
+
+client = HostPay(api_key="YOUR_API_KEY", secret_key="YOUR_SECRET_KEY")
+
+client.webhooks.subscriptions.delete("7c1d2e3f-...")
+```
+
+```typescript TypeScript
+import { HostPay } from "@hostpay/sdk";
+
+const client = new HostPay({ apiKey: "YOUR_API_KEY", secretKey: "YOUR_SECRET_KEY" });
+
+await client.webhooks.subscriptions.delete("7c1d2e3f-...");
+```
+
+</RequestExample>

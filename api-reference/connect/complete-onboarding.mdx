@@ -1,0 +1,141 @@
+---
+title: "Complete Onboarding"
+api: "POST /api/v1/transactions/wallet/complete-onboarding/"
+description: "Submit identity and business details for a user's Stripe Connect payout account."
+---
+
+Creates (or reuses) the Stripe Connect account for the wallet's owner and submits their verification details. Depending on Stripe's checks, the response reports payouts enabled, or lists what's still required — often a [verification document](/api-reference/connect/upload-verification-document).
+
+<Warning>
+  The `X-Forwarded-For` header is **required** and must contain the **end
+  customer's IP address** — Stripe records it as evidence that they accepted
+  the Terms of Service. Sending your server's IP is a compliance violation.
+  The SDKs make this a required `client_ip` / `clientIp` argument.
+</Warning>
+
+### Headers
+
+<ParamField header="X-Forwarded-For" type="string" required>
+  The end customer's IP address, captured from their request to your app.
+</ParamField>
+
+### Request Body
+
+<ParamField body="wallet_id" type="string" required>
+  The wallet whose owner is being onboarded.
+</ParamField>
+
+<ParamField body="individual" type="object" required>
+  The account holder's identity details (name, date of birth, address with
+  `country`, etc.) — Stripe's individual object shape.
+</ParamField>
+
+<ParamField body="business_profile" type="object" required>
+  The business profile (e.g. `mcc`, product description).
+</ParamField>
+
+<ParamField body="card_token" type="string">
+  Optional card token to attach as the payout destination.
+</ParamField>
+
+### Response
+
+<ResponseField name="account_id" type="string">
+  The Stripe Connect account ID.
+</ResponseField>
+
+<ResponseField name="payouts_enabled" type="boolean">
+  Whether the account is verified and can receive payouts.
+</ResponseField>
+
+<ResponseField name="currently_due" type="string[]">
+  Verification requirements Stripe still needs.
+</ResponseField>
+
+<ResponseField name="pending_verification" type="string[]">
+  Items Stripe is currently reviewing.
+</ResponseField>
+
+<ResponseField name="external_account_added" type="boolean">
+  Whether the optional card payout destination was attached.
+</ResponseField>
+
+<ResponseExample>
+
+```json 200
+{
+  "message": "Onboarding data submitted. Account verified and payouts enabled.",
+  "account_id": "acct_1ABC...",
+  "payouts_enabled": true,
+  "external_account_added": false,
+  "currently_due": [],
+  "pending_verification": [],
+  "disabled_reason": null
+}
+```
+
+```json 202
+{
+  "message": "Onboarding data submitted. Further verification needed. Requirements due: ['individual.verification.document'].",
+  "account_id": "acct_1ABC...",
+  "payouts_enabled": false,
+  "external_account_added": false,
+  "currently_due": ["individual.verification.document"],
+  "pending_verification": [],
+  "disabled_reason": null
+}
+```
+
+```json 400
+{
+  "detail": "Could not determine client IP address for TOS acceptance. 'X-Forwarded-For' header is missing."
+}
+```
+
+</ResponseExample>
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://hpay-api.host-sl.com/api/v1/transactions/wallet/complete-onboarding/ \
+  --header 'api-key: YOUR_API_KEY' \
+  --header 'secret-key: YOUR_SECRET_KEY' \
+  --header 'X-Forwarded-For: 41.223.10.5' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "wallet_id": "9a8b7c6d-...",
+    "individual": { "first_name": "Alice", "last_name": "Kamara", "address": { "country": "SL" } },
+    "business_profile": { "mcc": "5734" }
+  }'
+```
+
+```python Python
+from hostpay import HostPay
+
+client = HostPay(api_key="YOUR_API_KEY", secret_key="YOUR_SECRET_KEY")
+
+result = client.connect.complete_onboarding(
+    wallet_id="9a8b7c6d-...",
+    individual={"first_name": "Alice", "last_name": "Kamara", "address": {"country": "SL"}},
+    business_profile={"mcc": "5734"},
+    client_ip=request.client.host,  # the END CUSTOMER's IP, not your server's
+)
+print(result["payouts_enabled"], result["currently_due"])
+```
+
+```typescript TypeScript
+import { HostPay } from "@hostpay/sdk";
+
+const client = new HostPay({ apiKey: "YOUR_API_KEY", secretKey: "YOUR_SECRET_KEY" });
+
+const result = await client.connect.completeOnboarding({
+  walletId: "9a8b7c6d-...",
+  individual: { first_name: "Alice", last_name: "Kamara", address: { country: "SL" } },
+  businessProfile: { mcc: "5734" },
+  clientIp: req.ip, // the END CUSTOMER's IP, not your server's
+});
+console.log(result.payouts_enabled, result.currently_due);
+```
+
+</RequestExample>

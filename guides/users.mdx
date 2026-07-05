@@ -1,0 +1,67 @@
+---
+title: "User Management"
+description: "Creating and managing application users in HOST Pay"
+---
+
+## Overview
+
+Users are the entities that own wallets and initiate transactions. Within your HOST Pay application, you have full control over user lifecycle management.
+
+## User Identification
+
+A user in HOST Pay is identified by several key attributes:
+
+- **Name**: The full name of the user.
+- **Email**: A unique email address used for notifications and identification.
+- **Phone Number**: A unique phone number (required for mobile money transactions).
+- **Username**: A unique handle that can be used for P2P transfers.
+
+---
+
+## Creating Users
+
+To register a new user, use the [Create User](/api-reference/users/create) endpoint.
+
+```python Python
+payload = {
+    "app_user_id": "user_1001",            # your own identifier for this user (required)
+    "name": "Jane Cooper",
+    "phone_number": "+23279000000",
+    "email": "jane.cooper@example.com"  # optional
+}
+response = requests.post("https://hpay-api.host-sl.com/api/v1/users/create/", json=payload, headers=headers)
+```
+
+### Automatic Validations
+The system automatically validates that the `email` and `phone_number` are unique within your application. If a duplicate is found, the API will return a `400 Bad Request` error.
+
+---
+
+## Managing User Accounts
+
+### Updating User Info
+You can update a user's name or metadata using the [Update User](/api-reference/users/update) endpoint. Note that core identifiers like email and phone number are typically locked to ensure transaction integrity.
+
+### Account Status
+Similar to wallets, users can be **disabled** or **enabled**. Disabling a user prevents them from logging in (if using HOST Pay Auth) or initiating any new actions, though their existing wallets may still be active unless individually disabled.
+
+---
+
+## Privacy & Security
+
+HOST Pay handles sensitive user data with industry-standard encryption. As a developer, you should:
+
+- **Never share credentials**: Use your `api-key` and `secret-key` only on the backend.
+- **Sanitize Input**: Always validate user-provided data before sending it to the HOST Pay API.
+- **Metadata**: Use the `metadata` field to store non-sensitive application-specific data about the user (e.g., membership tier, preferences).
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Wallets Guide" icon="wallet" href="/guides/wallets">
+    Manage user funds
+  </Card>
+  <Card title="Authentication" icon="lock" href="/authentication">
+    Secure your API requests
+  </Card>
+</CardGroup>

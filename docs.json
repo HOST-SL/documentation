@@ -1,20 +1,161 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Mintlify Starter Kit",
+  "name": "HOST Pay API",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#00945E",
+    "light": "#3ACE93",
+    "dark": "#00834B"
   },
   "favicon": "/favicon.svg",
   "navigation": {
-    "pages": [
+    "tabs": [
       {
-        "group": "Getting Started",
-        "pages": [
-          "index",
-          "quickstart"
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "sdks",
+              "build-with-ai",
+              "authentication",
+              "environments"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/currency-conversion",
+              "guides/deposits",
+              "guides/transfers",
+              "guides/payouts",
+              "guides/wallets",
+              "guides/users",
+              "guides/escrow",
+              "guides/testing",
+              "guides/billing"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "API Reference",
+            "pages": [
+              "api-reference/introduction"
+            ]
+          },
+          {
+            "group": "Users",
+            "pages": [
+              "api-reference/users/create",
+              "api-reference/users/list",
+              "api-reference/users/get",
+              "api-reference/users/update",
+              "api-reference/users/partial-update",
+              "api-reference/users/delete",
+              "api-reference/users/disable",
+              "api-reference/users/enable"
+            ]
+          },
+          {
+            "group": "Wallets",
+            "pages": [
+              "api-reference/wallets/create",
+              "api-reference/wallets/list",
+              "api-reference/wallets/get",
+              "api-reference/wallets/balance",
+              "api-reference/wallets/disable",
+              "api-reference/wallets/enable"
+            ]
+          },
+          {
+            "group": "Transactions",
+            "pages": [
+              "api-reference/transactions/list",
+              "api-reference/transactions/get",
+              "api-reference/transactions/wallet-transactions",
+              "api-reference/transactions/card-deposit",
+              "api-reference/transactions/mobile-money-deposit",
+              "api-reference/transactions/transfer",
+              "api-reference/transactions/mobile-money-cashout",
+              "api-reference/transactions/payout",
+              "api-reference/transactions/sync"
+            ]
+          },
+          {
+            "group": "Escrow",
+            "pages": [
+              "api-reference/escrow/hold",
+              "api-reference/escrow/release",
+              "api-reference/escrow/refund"
+            ]
+          },
+          {
+            "group": "Stripe Connect",
+            "pages": [
+              "api-reference/connect/complete-onboarding",
+              "api-reference/connect/upload-verification-document",
+              "api-reference/connect/status",
+              "api-reference/connect/delete"
+            ]
+          },
+          {
+            "group": "Fees",
+            "pages": [
+              "api-reference/fees/summary",
+              "api-reference/fees/configuration",
+              "api-reference/fees/estimate-deposit",
+              "api-reference/fees/estimate-withdrawal",
+              "api-reference/fees/estimate-transfer",
+              "api-reference/fees/estimate-card-metadata"
+            ]
+          },
+          {
+            "group": "Webhook Subscriptions",
+            "pages": [
+              "api-reference/webhooks/create-subscription",
+              "api-reference/webhooks/list-subscriptions",
+              "api-reference/webhooks/update-subscription",
+              "api-reference/webhooks/delete-subscription",
+              "api-reference/webhooks/rotate-secret"
+            ]
+          },
+          {
+            "group": "Testing",
+            "pages": [
+              "api-reference/testing/simulate-monime-webhook"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Webhooks",
+        "groups": [
+          {
+            "group": "Webhooks",
+            "pages": [
+              "webhooks/overview",
+              "webhooks/events",
+              "webhooks/security",
+              "webhooks/testing"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Changelog",
+        "groups": [
+          {
+            "group": "Changelog",
+            "pages": [
+              "changelog/overview"
+            ]
+          }
         ]
       }
     ],
@@ -22,13 +163,18 @@
       "anchors": [
         {
           "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
+          "href": "https://docs.hpay.host-sl.com",
           "icon": "book-open-cover"
         },
         {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
+          "anchor": "Community",
+          "href": "https://discord.gg/hostpay",
+          "icon": "discord"
+        },
+        {
+          "anchor": "GitHub",
+          "href": "https://github.com/hostpay",
+          "icon": "github"
         }
       ]
     }
@@ -37,18 +183,42 @@
     "light": "/logo/light.svg",
     "dark": "/logo/dark.svg"
   },
+  "api": {
+    "mdx": {
+      "server": "https://hpay-api.host-sl.com",
+      "auth": {
+        "method": "key",
+        "name": "api-key"
+      }
+    }
+  },
+  "background": {
+    "color": {
+      "dark": "#0F172A"
+    }
+  },
   "navbar": {
     "links": [
       {
         "label": "Support",
-        "href": "mailto:hi@mintlify.com"
+        "href": "mailto:host.sl.co@gmail.com"
       }
     ],
     "primary": {
       "type": "button",
       "label": "Dashboard",
-      "href": "https://app.mintlify.com"
+      "href": "https://hpay.host-sl.com"
     }
+  },
+  "footer": {
+    "socials": {
+      "twitter": "https://twitter.com/hostpay",
+      "github": "https://github.com/hostpay",
+      "linkedin": "https://linkedin.com/company/hostpay"
+    }
+  },
+  "search": {
+    "prompt": "Search HOST Pay docs..."
   },
   "contextual": {
     "options": [
@@ -56,17 +226,7 @@
       "view",
       "chatgpt",
       "claude",
-      "perplexity",
-      "mcp",
-      "cursor",
-      "vscode"
+      "cursor"
     ]
-  },
-  "footer": {
-    "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
-    }
   }
 }

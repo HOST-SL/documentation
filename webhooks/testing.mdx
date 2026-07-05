@@ -1,0 +1,42 @@
+---
+title: "Testing Webhooks"
+description: "Validate your webhook endpoint before processing live events"
+---
+
+Before relying on webhooks in production, confirm your endpoint receives deliveries and verifies signatures correctly.
+
+<CardGroup cols={2}>
+  <Card title="Test Mode" icon="flask">
+    All transactions made in Test Mode trigger real webhook deliveries to your
+    subscribed endpoint
+  </Card>
+  <Card title="test.ping Event" icon="satellite-dish">
+    Use the `test.ping` event from the dashboard to verify your endpoint is
+    reachable and responding correctly
+  </Card>
+</CardGroup>
+
+## Sending a Test Event
+
+<Steps>
+  <Step title="Subscribe in Test Mode">
+    Create a webhook subscription pointing at your endpoint while in Test Mode.
+  </Step>
+  <Step title="Send a test.ping">
+    From the dashboard, send a `test.ping` event to the subscription and confirm your endpoint returns a `200 OK`.
+  </Step>
+  <Step title="Verify the signature">
+    Confirm your handler validates the `X-HostPay-Signature` against the subscription's signing secret. See [Security](/webhooks/security).
+  </Step>
+  <Step title="Trigger a real flow">
+    Run a Test Mode payment or payout and confirm the matching event (e.g. `payment.succeeded`) is delivered and processed.
+  </Step>
+</Steps>
+
+## Inspecting Deliveries
+
+You can view delivery history — status, response code, latency, and the payload — for every attempt from the **Delivery Log** in the dashboard's Webhooks section.
+
+<Tip>
+  Failed deliveries can be manually re-triggered from the dashboard. See [Overview](/webhooks/overview) for the automatic retry policy.
+</Tip>

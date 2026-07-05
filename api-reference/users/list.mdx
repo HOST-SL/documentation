@@ -1,0 +1,116 @@
+---
+title: "List Users"
+api: "GET /api/v1/users/"
+description: "Retrieve a list of users for your application"
+---
+
+## Endpoint
+
+```
+GET /api/v1/users/
+```
+
+## Headers
+
+<ParamField header="api-key" type="string" required>
+  Your application API key
+</ParamField>
+
+<ParamField header="secret-key" type="string" required>
+  Your application secret key
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="is_active" type="boolean">
+  Filter users by their active status. If not provided, returns all users.
+</ParamField>
+
+## Response
+
+The response is an array of user objects.
+
+<ResponseField name="id" type="string">
+  Unique identifier for the user
+</ResponseField>
+
+<ResponseField name="app_user_id" type="string">
+  The user ID from your own application
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  User's full name
+</ResponseField>
+
+<ResponseField name="email" type="string">
+  User's email address
+</ResponseField>
+
+<ResponseField name="phone_number" type="string">
+  User's phone number
+</ResponseField>
+
+<ResponseField name="is_active" type="boolean">
+  Whether the user account is active
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  ISO 8601 timestamp of creation
+</ResponseField>
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://hpay-api.host-sl.com/api/v1/users/?is_active=true' \
+  --header 'api-key: YOUR_API_KEY' \
+  --header 'secret-key: YOUR_SECRET_KEY'
+```
+
+```python Python
+from hostpay import HostPay
+
+client = HostPay(api_key="YOUR_API_KEY", secret_key="YOUR_SECRET_KEY")
+
+users = client.users.list(is_active=True)
+for user in users:
+    print(user["id"], user["name"])
+```
+
+```typescript TypeScript
+import { HostPay } from "@hostpay/sdk";
+
+const client = new HostPay({ apiKey: "YOUR_API_KEY", secretKey: "YOUR_SECRET_KEY" });
+
+const users = await client.users.list({ isActive: true });
+for (const user of users) console.log(user.id, user.name);
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 - Success
+[
+  {
+    "id": "user_abc123",
+    "app_user_id": "1",
+    "name": "John Doe",
+    "email": "john@example.com",
+    "phone_number": "+23279123456",
+    "is_active": true,
+    "created_at": "2025-01-16T10:30:00Z"
+  },
+  {
+    "id": "user_xyz789",
+    "app_user_id": "2",
+    "name": "Jane Smith",
+    "email": "jane@example.com",
+    "phone_number": "+23279654321",
+    "is_active": true,
+    "created_at": "2025-01-17T11:45:00Z"
+  }
+]
+```
+
+</ResponseExample>

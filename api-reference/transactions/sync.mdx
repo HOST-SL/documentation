@@ -1,0 +1,64 @@
+---
+title: "Sync Transaction"
+api: "POST /api/v1/transactions/sync/{reference_id}"
+description: "Trigger an immediate reconciliation sync for one of your transactions by its provider reference."
+---
+
+Fetches the latest provider status for a transaction and reconciles it immediately — instead of waiting for the next scheduled reconciliation run. Call it from your backend right after a payment completes for instant post-payment status.
+
+Scoped to your application and the calling key's mode (test/live); it cannot touch other merchants' data.
+
+### Path Parameters
+
+<ParamField path="reference_id" type="string" required>
+  The provider reference ID of the transaction to sync (e.g. the Monime payment reference).
+</ParamField>
+
+### Response
+
+<ResponseExample>
+
+```json 200
+{
+  "status": "completed",
+  "transaction_id": "b1f2c3d4-...",
+  "message": "Transaction synced."
+}
+```
+
+```json 404
+{
+  "detail": "Transaction not found"
+}
+```
+
+</ResponseExample>
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://hpay-api.host-sl.com/api/v1/transactions/sync/mnm_ref_123 \
+  --header 'api-key: YOUR_API_KEY' \
+  --header 'secret-key: YOUR_SECRET_KEY'
+```
+
+```python Python
+from hostpay import HostPay
+
+client = HostPay(api_key="YOUR_API_KEY", secret_key="YOUR_SECRET_KEY")
+
+result = client.transactions.sync("mnm_ref_123")
+print(result["status"])
+```
+
+```typescript TypeScript
+import { HostPay } from "@hostpay/sdk";
+
+const client = new HostPay({ apiKey: "YOUR_API_KEY", secretKey: "YOUR_SECRET_KEY" });
+
+const result = await client.transactions.sync("mnm_ref_123");
+console.log(result.status);
+```
+
+</RequestExample>

@@ -1,0 +1,127 @@
+---
+title: "Get Transaction"
+api: "GET /api/v1/transactions/{transaction_id}"
+description: "Retrieve details of a specific transaction by its unique ID."
+---
+
+This endpoint allows you to fetch the full details of a single transaction using its unique identifier.
+
+### Path Parameters
+
+<ParamField path="transaction_id" type="string" required>
+  The unique identifier of the transaction to retrieve.
+</ParamField>
+
+### Response
+
+<ResponseField name="id" type="string">
+  The unique identifier for the transaction.
+</ResponseField>
+
+<ResponseField name="wallet_id" type="string">
+  The ID of the primary wallet involved.
+</ResponseField>
+
+<ResponseField name="recipient_wallet_id" type="string">
+  The ID of the recipient wallet (for transfers).
+</ResponseField>
+
+<ResponseField name="amount" type="number">
+  The transaction amount.
+</ResponseField>
+
+<ResponseField name="currency" type="string">
+  The currency code.
+</ResponseField>
+
+<ResponseField name="transaction_type" type="string">
+  The type of transaction (deposit, withdrawal, transfer, etc.).
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  The current status of the transaction.
+</ResponseField>
+
+<ResponseField name="description" type="string">
+  A brief description of the transaction.
+</ResponseField>
+
+<ResponseField name="reference_id" type="string">
+  Provider-specific reference ID (e.g., Stripe or Monime).
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  The timestamp when the transaction was created.
+</ResponseField>
+
+<ResponseExample>
+
+```json 200
+{
+  "id": "trans_123abc...",
+  "wallet_id": "wall_789xyz...",
+  "recipient_wallet_id": null,
+  "amount": 50.0,
+  "currency": "USD",
+  "transaction_type": "deposit",
+  "payment_method": "card",
+  "status": "completed",
+  "stripe_fee": 1.75,
+  "monime_fee": 0,
+  "application_fee": 1.0,
+  "description": "Card deposit",
+  "reference_id": "pi_3Qe...",
+  "created_at": "2025-01-16T10:00:00Z",
+  "updated_at": "2025-01-16T10:05:00Z"
+}
+```
+
+</ResponseExample>
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url https://hpay-api.host-sl.com/api/v1/transactions/YOUR_TRANSACTION_ID \
+  --header 'api-key: YOUR_API_KEY' \
+  --header 'secret-key: YOUR_SECRET_KEY'
+```
+
+```python Python
+from hostpay import HostPay
+
+client = HostPay(api_key="YOUR_API_KEY", secret_key="YOUR_SECRET_KEY")
+
+txn = client.transactions.get("YOUR_TRANSACTION_ID")
+print(txn["status"], txn["amount"])
+```
+
+```typescript TypeScript
+import { HostPay } from "@hostpay/sdk";
+
+const client = new HostPay({ apiKey: "YOUR_API_KEY", secretKey: "YOUR_SECRET_KEY" });
+
+const txn = await client.transactions.get("YOUR_TRANSACTION_ID");
+console.log(txn.status, txn.amount);
+```
+
+```php PHP
+<?php
+
+$curl = curl_init();
+
+curl_setopt_array($curl, [
+  CURLOPT_URL => "https://hpay-api.host-sl.com/api/v1/transactions/YOUR_TRANSACTION_ID",
+  CURLOPT_RETURNTRANSFER => true,
+  CURLOPT_HTTPHEADER => [
+    "api-key: YOUR_API_KEY",
+    "secret-key: YOUR_SECRET_KEY"
+  ],
+]);
+
+$response = curl_exec($curl);
+curl_close($curl);
+echo $response;
+```
+
+</RequestExample>

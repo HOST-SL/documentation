@@ -1,0 +1,84 @@
+---
+title: "Disable User"
+api: "POST /api/v1/users/{user_id}/disable"
+description: "Temporarily disable a user and their associated wallet"
+---
+
+## Endpoint
+
+```
+POST /api/v1/users/{user_id}/disable
+```
+
+## Path Parameters
+
+<ParamField path="user_id" type="string" required>
+  The unique identifier of the user to disable
+</ParamField>
+
+## Headers
+
+<ParamField header="api-key" type="string" required>
+  Your application API key
+</ParamField>
+
+<ParamField header="secret-key" type="string" required>
+  Your application secret key
+</ParamField>
+
+## Response
+
+<ResponseField name="message" type="string">
+  Success message confirming the user and wallet have been disabled
+</ResponseField>
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://hpay-api.host-sl.com/api/v1/users/user_abc123/disable \
+  --header 'api-key: YOUR_API_KEY' \
+  --header 'secret-key: YOUR_SECRET_KEY'
+```
+
+```python Python
+from hostpay import HostPay
+
+client = HostPay(api_key="YOUR_API_KEY", secret_key="YOUR_SECRET_KEY")
+
+result = client.users.disable("user_abc123")
+print(result["message"])
+```
+
+```typescript TypeScript
+import { HostPay } from "@hostpay/sdk";
+
+const client = new HostPay({ apiKey: "YOUR_API_KEY", secretKey: "YOUR_SECRET_KEY" });
+
+const result = await client.users.disable("user_abc123");
+console.log(result.message);
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 - Success
+{
+  "message": "User and wallet disabled successfully"
+}
+```
+
+```json 404 - Not Found
+{
+  "detail": "User not found"
+}
+```
+
+</ResponseExample>
+
+<Info>
+  Disabling a user has a cascading effect: the user's primary wallet is also
+  automatically disabled. This prevents any further deposits, withdrawals, or
+  transfers until the user is re-enabled.
+</Info>

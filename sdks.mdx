@@ -1,0 +1,308 @@
+---
+title: "SDKs"
+description: "Official HOST Pay client libraries for Python and TypeScript"
+keywords: ["sdk", "python", "typescript", "node", "client library"]
+---
+
+Official client libraries for the HOST Pay API. Both SDKs cover the full
+merchant API — users (including list/update/lifecycle), wallets, deposits,
+transfers, payouts, escrow, and transaction queries — plus webhook signature
+verification, typed responses, automatic retries, and idempotency support.
+
+<CardGroup cols={2}>
+  <Card title="Python" icon="python" href="https://pypi.org/project/hostpay/">
+    `hostpay` on PyPI — Python 3.8+
+  </Card>
+  <Card title="TypeScript" icon="node-js" href="https://www.npmjs.com/package/@hostpay/sdk">
+    `@hostpay/sdk` on npm — Node 18+, zero runtime dependencies
+  </Card>
+</CardGroup>
+
+Source code for both lives at
+[github.com/HOST-SL/hostpay-sdk](https://github.com/HOST-SL/hostpay-sdk).
+
+## Install
+
+<CodeGroup>
+
+```bash Python
+pip install hostpay
+```
+
+```bash TypeScript
+npm install @hostpay/sdk
+```
+
+</CodeGroup>
+
+## Initialize the client
+
+Pass your credentials once — every call is authenticated automatically. Use
+Test Mode keys while integrating; the same code works in Live Mode.
+
+<CodeGroup>
+
+```python Python
+from hostpay import HostPay
+
+client = HostPay(
+    api_key="YOUR_API_KEY",
+    secret_key="YOUR_SECRET_KEY",
+)
+```
+
+```typescript TypeScript
+import { HostPay } from "@hostpay/sdk";
+
+const client = new HostPay({
+  apiKey: process.env.HOSTPAY_API_KEY!,
+  secretKey: process.env.HOSTPAY_SECRET_KEY!,
+});
+```
+
+</CodeGroup>
+
+<Warning>
+  The SDKs use your `secret-key`, so they are **server-side only**. Never bundle
+  them into browser or mobile code.
+</Warning>
+
+### Async (Python)
+
+The Python SDK also ships `AsyncHostPay` (v0.3.0+) — the same surface with every
+method awaited, for FastAPI, aiohttp, or any asyncio app. The TypeScript client
+is async by nature (every method returns a Promise).
+
+```python Python
+from hostpay import AsyncHostPay
+
+async with AsyncHostPay(api_key="YOUR_API_KEY", secret_key="YOUR_SECRET_KEY") as client:
+    user = await client.users.create(
+        app_user_id="user_123", name="Alice", phone_number="+23279000000"
+    )
+    wallet = await client.wallets.create(user.id)
+```
+
+## The money surface
+
+<CodeGroup>
+
+```python Python
+# Users and wallets
+user = client.users.create(
+    app_user_id="user_1001",
+    name="John Doe",
+    phone_number="+23279123456",
+    email="john@example.com",
+)
+wallet = client.wallets.create(user["id"])
+
+# Deposit via mobile money
+deposit = client.deposits.mobile_money(wallet_id=wallet["id"], amount=100)
+
+# Balance, transfer, payout, escrow
+balance = client.wallets.balance(wallet["id"])
+client.transfers.create(
+    sender_wallet_id=wallet["id"],
+    recipient_identifier="johndoe",
+    amount=25,
+)
+client.payouts.mobile_money(
+    wallet_id=wallet["id"], amount=50, phone_number="+23279123456"
+)
+hold = client.escrow.hold(wallet_id=wallet["id"], amount=10)
+client.escrow.release(hold["id"], recipient_wallet_id="RECIPIENT_WALLET_ID")
+```
+
+```typescript TypeScript
+// Users and wallets
+const user = await client.users.create({
+  appUserId: "user_1001",
+  name: "John Doe",
+  phoneNumber: "+23279123456",
+  email: "john@example.com",
+});
+const wallet = await client.wallets.create(user.id);
+
+// Deposit via mobile money
+const deposit = await client.deposits.mobileMoney({
+  walletId: wallet.id,
+  amount: 100,
+});
+
+// Balance, transfer, payout, escrow
+const balance = await client.wallets.balance(wallet.id);
+await client.transfers.create({
+  senderWalletId: wallet.id,
+  recipientIdentifier: "johndoe",
+  amount: 25,
+});
+await client.payouts.mobileMoney({
+  walletId: wallet.id,
+  amount: 50,
+  phoneNumber: "+23279123456",
+});
+const hold = await client.escrow.hold({ walletId: wallet.id, amount: 10 });
+await client.escrow.release(hold.id, { recipientWalletId: "RECIPIENT_WALLET_ID" });
+```
+
+</CodeGroup>
+
+## Idempotency
+
+Money-moving calls accept an idempotency key. Reuse the same key to retry
+safely without double-charging:
+
+<CodeGroup>
+
+```python Python
+client.payouts.mobile_money(
+    wallet_id=wallet_id,
+    amount=50,
+    phone_number="+23279123456",
+    idempotency_key="order-42-payout",
+)
+```
+
+```typescript TypeScript
+await client.payouts.mobileMoney({
+  walletId,
+  amount: 50,
+  phoneNumber: "+23279123456",
+  idempotencyKey: "order-42-payout",
+});
+```
+
+</CodeGroup>
+
+## Verifying webhooks
+
+Both SDKs verify the `X-HostPay-Signature` header and reject replayed or
+tampered deliveries. Pass the **raw** request body, not a re-parsed object. See
+[Webhook security](/webhooks/security) for details.
+
+<CodeGroup>
+
+```python Python (FastAPI)
+from fastapi import HTTPException, Request
+from hostpay import SignatureVerificationError
+
+@app.post("/webhooks/hostpay")
+async def hook(request: Request):
+    try:
+        event = client.webhooks.construct_event(
+            payload=await request.body(),   # raw bytes
+            headers=request.headers,
+            secret=WEBHOOK_SIGNING_SECRET,
+        )
+    except SignatureVerificationError:
+        raise HTTPException(status_code=400, detail="Invalid signature")
+    if event.event == "deposit.completed":
+        ...  # handle it
+    return {"ok": True}
+```
+
+```typescript TypeScript
+import { SignatureVerificationError } from "@hostpay/sdk";
+
+app.post("/webhooks/hostpay", express.raw({ type: "*/*" }), (req, res) => {
+  try {
+    const event = client.webhooks.constructEvent(
+      req.body,           // raw body
+      req.headers,
+      WEBHOOK_SIGNING_SECRET,
+    );
+    if (event.event === "deposit.completed") {
+      // handle it
+    }
+    res.sendStatus(200);
+  } catch (err) {
+    if (err instanceof SignatureVerificationError) return res.sendStatus(400);
+    throw err;
+  }
+});
+```
+
+</CodeGroup>
+
+## Error handling
+
+Errors are typed by HTTP status so you can branch on the cause:
+
+| Error | Status | Meaning |
+| --- | --- | --- |
+| `AuthenticationError` | 401, 403 | Bad or missing credentials |
+| `InvalidRequestError` | 400, 404, 422 | Validation failure, insufficient funds, missing resource |
+| `RateLimitError` | 429 | Too many requests — back off and retry |
+| `APIError` | 5xx | Server-side problem |
+| `APIConnectionError` | — | Network failure reaching the API |
+
+<CodeGroup>
+
+```python Python
+from hostpay import InvalidRequestError, RateLimitError
+
+try:
+    client.transfers.create(
+        sender_wallet_id=wallet_id,
+        recipient_identifier="johndoe",
+        amount=25,
+    )
+except InvalidRequestError as e:
+    print(f"Rejected ({e.status_code}): {e}")   # e.g. insufficient funds
+except RateLimitError:
+    ...  # back off and retry
+```
+
+```typescript TypeScript
+import { InvalidRequestError, RateLimitError } from "@hostpay/sdk";
+
+try {
+  await client.transfers.create({
+    senderWalletId: walletId,
+    recipientIdentifier: "johndoe",
+    amount: 25,
+  });
+} catch (err) {
+  if (err instanceof InvalidRequestError) {
+    console.log(`Rejected (${err.status}): ${err.message}`);
+  } else if (err instanceof RateLimitError) {
+    // back off and retry
+  } else throw err;
+}
+```
+
+</CodeGroup>
+
+## Beyond payments
+
+From `hostpay` 0.4.0 / `@hostpay/sdk` 0.3.0 the SDKs also cover:
+
+- **Fees** — `client.fees`: fee summary, configuration, and deposit / withdrawal /
+  transfer / card-metadata estimates
+- **Webhook subscriptions** — `client.webhooks.subscriptions`: create, list,
+  update, delete, and rotate-secret (the create and rotate responses include the
+  signing secret **once** — store it)
+- **Transaction sync** — `client.transactions.sync(reference_id)` for instant
+  post-payment status
+- **Test-mode simulator** — `client.testing.simulate_monime_webhook(...)` to
+  complete or fail a pending Test Mode deposit (rejected in Live Mode)
+- **`app_info` / `appInfo`** — identify your platform in the User-Agent, e.g.
+  `HostPay(..., app_info="YourApp/1.0")`
+
+And from `hostpay` 0.5.0 / `@hostpay/sdk` 0.4.0:
+
+- **Stripe Connect onboarding** — `client.connect`: complete onboarding
+  (requires the **end customer's IP** for Stripe TOS acceptance), verification
+  document upload, status sync, and deletion
+- **Partial user update** — `client.users.patch(...)`: change only the fields
+  you send
+
+## Other languages
+
+Any language that speaks HTTP works — see the
+[API reference](/api-reference/introduction) for raw request examples, and
+[Authentication](/authentication) for the required headers. The full OpenAPI
+spec is published in the
+[SDK repository](https://github.com/HOST-SL/hostpay-sdk/blob/main/openapi.json)
+if you want to generate your own client.

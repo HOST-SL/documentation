@@ -1,0 +1,157 @@
+---
+title: "Webhooks Overview"
+description: "Real-time event notifications from HOST Pay"
+---
+
+## What are Webhooks?
+
+Webhooks allow your application to receive real-time notifications when events occur in HOST Pay. Instead of polling the API, HOST Pay will send HTTP POST requests to your specified endpoint whenever a transaction or account event takes place.
+
+## Common Use Cases
+
+<CardGroup cols={2}>
+  <Card title="Payment Confirmation" icon="check">
+    Get notified the moment deposits are successfully processed
+  </Card>
+  <Card title="Transfer Updates" icon="arrow-right-arrow-left">
+    Track wallet-to-wallet transfers in real time
+  </Card>
+  <Card title="Payout Status" icon="money-bill-transfer">
+    Monitor withdrawal processing and failures
+  </Card>
+  <Card title="Balance Changes" icon="scale-balanced">
+    React to wallet balance and fee events as they happen
+  </Card>
+</CardGroup>
+
+## Webhook Events
+
+HOST Pay sends webhooks for payment, transfer, payout, wallet, transaction, escrow, and system events. You can subscribe to individual events or use wildcards (e.g., `payment.*`) to receive all events in a group.
+
+See [Webhook Events](/webhooks/events) for the full list of event types and subscription patterns.
+
+## Webhook Payload
+
+Every webhook delivers a JSON body with this structure:
+
+```json
+{
+  "data": {
+    "id": "txn_abc123xyz",
+    "wallet_id": "wallet_def456",
+    "amount": 100.0,
+    "currency": "USD",
+    "status": "succeeded",
+    "payment_method": "mobile_money",
+    "reference_id": "pmc_789xyz",
+    "created_at": "2025-01-16T10:25:00Z",
+    "updated_at": "2025-01-16T10:30:00Z"
+  },
+  "metadata": {}
+}
+```
+
+The `status` field inside `data` reflects the outcome extracted from the event type (e.g., `succeeded`, `failed`, `created`). The `metadata` object carries any additional context attached to the event.
+
+<Note>
+  The event type itself (`payment.succeeded`, `payout.failed`, etc.) is identified by the `X-Webhook-Version` and event delivery headers, not an `event` field in the body.
+</Note>
+
+## Request Headers
+
+Every webhook delivery includes these headers:
+
+| Header                   | Description                                                     |
+| ------------------------ | --------------------------------------------------------------- |
+| `X-HostPay-Signature`    | HMAC-SHA256 signature of the payload (format: `v1=<hex>`)      |
+| `X-Webhook-Timestamp`    | Unix timestamp (seconds) when the webhook was sent             |
+| `X-Webhook-Version`      | API version string (e.g., `2025-01`)                           |
+| `X-Webhook-Source`       | Always `HostPay`                                               |
+| `X-HostPay-Delivery-Id`  | Unique delivery ID for idempotency tracking                    |
+| `Idempotency-Key`        | Same as `X-HostPay-Delivery-Id`                                |
+
+## Setting Up Webhooks
+
+<Steps>
+  <Step title="Create Endpoint">
+    Set up an HTTPS endpoint to receive POST requests (e.g.,
+    `https://yourapp.com/webhooks/hostpay`)
+  </Step>
+  <Step title="Configure in Dashboard">
+    Add your webhook URL and select the events you want to subscribe to in the
+    HOST Pay dashboard
+  </Step>
+  <Step title="Store Your Secret">
+    Save the webhook secret displayed during setup — you'll need it to verify
+    signatures
+  </Step>
+  <Step title="Verify Signatures">
+    Validate every incoming webhook's signature before processing it — see [Security](/webhooks/security)
+  </Step>
+  <Step title="Test">
+    Send a `test.ping` event from the dashboard and confirm your endpoint
+    receives it — see [Testing](/webhooks/testing)
+  </Step>
+</Steps>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Respond Quickly — Process Async">
+    Return a `200 OK` as soon as you receive the webhook, then process it in the background. HOST Pay considers any non-2xx response a failure and will retry.
+  </Accordion>
+
+{" "}
+
+  <Accordion title="Handle Duplicates (Idempotency)">
+    The same event may be delivered more than once. Use the `X-HostPay-Delivery-Id` header or `data.id` to detect duplicates and skip re-processing.
+  </Accordion>
+
+{" "}
+
+  <Accordion title="Validate Timestamps">
+    Check that `X-Webhook-Timestamp` is within 5 minutes of your server time to prevent replay attacks. Reject requests that are too old.
+  </Accordion>
+
+{" "}
+
+  <Accordion title="Use HTTPS Only">
+    Your endpoint must be served over HTTPS. HTTP endpoints will not receive webhooks.
+  </Accordion>
+
+{" "}
+
+  <Accordion title="Monitor Failures">
+    Track failed deliveries in your logs and set up alerts. After all retry attempts are exhausted, no further automatic retries will occur.
+  </Accordion>
+
+  <Accordion title="Test in Test Mode First">
+    Use Test Mode and the `test.ping` event to validate your endpoint before processing live events.
+  </Accordion>
+</AccordionGroup>
+
+## Retry Policy
+
+If your endpoint returns a non-2xx status code or times out, HOST Pay retries the delivery automatically:
+
+- **Up to 10 retry attempts** after the initial delivery failure
+- **Exponential backoff**: the delay between attempts doubles each time, starting at **60 seconds** and capping at **30 minutes**
+- After all attempts are exhausted, the delivery is marked **failed** and no further retries occur
+
+<Tip>
+  You can view delivery history and manually re-trigger failed webhooks from the HOST Pay dashboard.
+</Tip>
+
+## Next Steps
+
+<CardGroup cols={3}>
+  <Card title="Webhook Events" icon="list" href="/webhooks/events">
+    Browse every event type and subscription pattern
+  </Card>
+  <Card title="Security" icon="shield-halved" href="/webhooks/security">
+    Verify signatures before processing events
+  </Card>
+  <Card title="Testing" icon="flask" href="/webhooks/testing">
+    Validate your endpoint before going live
+  </Card>
+</CardGroup>

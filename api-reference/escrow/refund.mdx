@@ -1,0 +1,112 @@
+---
+title: "Refund Escrow Funds"
+api: "POST /api/v1/escrow/{transaction_id}/refund"
+description: "Return held escrow funds to the original sender."
+---
+
+Refunds funds held by an escrow [hold](/api-reference/escrow/hold) back to the wallet they were held from. Use this when a held transaction should be reversed (e.g., an order was cancelled). The full held amount is returned to the original sender; no escrow fee is applied.
+
+### Path Parameters
+
+<ParamField path="transaction_id" type="string" required>
+  The ID of the escrow transaction (returned by the hold endpoint) to refund. Must still be holding funds.
+</ParamField>
+
+This endpoint takes no request body.
+
+### Headers
+
+<ParamField header="Idempotency-Key" type="string">
+  Optional but recommended for this money-moving call. Retries with the same
+  key within 24 hours return the original result instead of refunding twice.
+</ParamField>
+
+### Response
+
+<ResponseField name="id" type="string">
+  The unique identifier of the refund transaction.
+</ResponseField>
+
+<ResponseField name="wallet_id" type="string">
+  The ID of the original sender wallet the funds were returned to.
+</ResponseField>
+
+<ResponseField name="amount" type="number">
+  The amount refunded to the sender.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  The current status of the refund transaction (e.g., `completed`).
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  ISO 8601 timestamp of the refund.
+</ResponseField>
+
+<ResponseExample>
+
+```json 200
+{
+  "id": "d3e4f5a6-...",
+  "wallet_id": "9a8b7c6d-...",
+  "escrow_wallet_id": "5e4f3a2b-...",
+  "recipient_wallet_id": null,
+  "application_wallet_id": null,
+  "amount": 200.0,
+  "escrow_amount": 0.0,
+  "application_fee": null,
+  "transaction_type": "escrow_refund",
+  "status": "completed",
+  "description": "Escrow refunded",
+  "created_at": "2025-01-16T12:30:00Z",
+  "updated_at": "2025-01-16T12:30:00Z"
+}
+```
+
+```json 401
+{
+  "detail": "Invalid credentials"
+}
+```
+
+```json 404
+{
+  "detail": "Escrow transaction not found"
+}
+```
+
+</ResponseExample>
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://hpay-api.host-sl.com/api/v1/escrow/b1f2c3d4-.../refund \
+  --header 'api-key: YOUR_API_KEY' \
+  --header 'secret-key: YOUR_SECRET_KEY'
+```
+
+```python Python
+from hostpay import HostPay
+
+client = HostPay(api_key="YOUR_API_KEY", secret_key="YOUR_SECRET_KEY")
+
+refund = client.escrow.refund(
+    "b1f2c3d4-...",  # escrow hold transaction id
+    idempotency_key="order-1234-refund",
+)
+print(refund["status"])
+```
+
+```typescript TypeScript
+import { HostPay } from "@hostpay/sdk";
+
+const client = new HostPay({ apiKey: "YOUR_API_KEY", secretKey: "YOUR_SECRET_KEY" });
+
+const refund = await client.escrow.refund("b1f2c3d4-...", {
+  idempotencyKey: "order-1234-refund",
+});
+console.log(refund.status);
+```
+
+</RequestExample>

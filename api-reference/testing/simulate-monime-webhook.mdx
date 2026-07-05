@@ -1,0 +1,79 @@
+---
+title: "Simulate Mobile Money Webhook"
+api: "POST /api/v1/testing/simulate-monime-webhook"
+description: "Complete or fail a pending Test Mode mobile-money deposit."
+---
+
+Simulates the Monime provider webhook so a pending Test Mode deposit completes (or fails) without a real mobile-money payment. This is how you drive the deposit lifecycle end-to-end in the sandbox — see the [testing guide](/guides/testing).
+
+<Warning>
+  Test Mode only. Calling this with Live Mode credentials returns `403`.
+</Warning>
+
+### Request Body
+
+<ParamField body="transaction_id" type="string" required>
+  The ID of the pending deposit transaction to complete or fail.
+</ParamField>
+
+<ParamField body="status" type="string" default="successful">
+  The outcome to simulate: `successful` or `failed`.
+</ParamField>
+
+### Response
+
+<ResponseExample>
+
+```json 200
+{
+  "message": "Webhook simulation processed",
+  "transaction_id": "b1f2c3d4-...",
+  "status": "completed"
+}
+```
+
+```json 403
+{
+  "detail": "This endpoint is only available in Test Mode"
+}
+```
+
+```json 404
+{
+  "detail": "Transaction not found"
+}
+```
+
+</ResponseExample>
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://hpay-api.host-sl.com/api/v1/testing/simulate-monime-webhook \
+  --header 'api-key: YOUR_API_KEY' \
+  --header 'secret-key: YOUR_SECRET_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "transaction_id": "b1f2c3d4-...",
+    "status": "successful"
+  }'
+```
+
+```python Python
+from hostpay import HostPay
+
+client = HostPay(api_key="YOUR_API_KEY", secret_key="YOUR_SECRET_KEY")
+
+client.testing.simulate_monime_webhook("b1f2c3d4-...")  # or status="failed"
+```
+
+```typescript TypeScript
+import { HostPay } from "@hostpay/sdk";
+
+const client = new HostPay({ apiKey: "YOUR_API_KEY", secretKey: "YOUR_SECRET_KEY" });
+
+await client.testing.simulateMonimeWebhook({ transactionId: "b1f2c3d4-..." });
+```
+
+</RequestExample>

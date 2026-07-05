@@ -1,0 +1,181 @@
+---
+title: "Create Card Deposit"
+api: "POST /api/v1/transactions/wallet/card-deposit/create"
+description: "Create a card deposit payment intent for a specific wallet."
+---
+
+This endpoint initiates a card deposit to a user's wallet. It creates a Stripe PaymentIntent that the client must confirm to complete the deposit.
+
+### Request Body
+
+<ParamField body="wallet_id" type="string" required>
+  The unique identifier of the wallet to deposit funds into.
+</ParamField>
+
+<ParamField body="amount" type="number" required>
+  The amount to deposit in the wallet's base currency (e.g., 100.00 for $100.00 USD).
+</ParamField>
+
+<ParamField body="payment_method_id" type="string">
+  Optional Stripe PaymentMethod ID (`pm_...`) to reuse from fee estimation. If provided, the user won't need to enter card details again.
+</ParamField>
+
+### Response
+
+<ResponseField name="id" type="string">
+  The unique identifier for the transaction.
+</ResponseField>
+
+<ResponseField name="wallet_id" type="string">
+  The ID of the wallet receiving the deposit.
+</ResponseField>
+
+<ResponseField name="amount" type="number">
+  The net amount to be credited to the wallet.
+</ResponseField>
+
+<ResponseField name="currency" type="string">
+  The currency code (e.g., "USD").
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  The current status of the transaction (e.g., "pending", "completed", "failed").
+</ResponseField>
+
+<ResponseField name="total_amount_paid" type="number">
+  The total amount paid by the user, including all platform and provider fees.
+</ResponseField>
+
+<ResponseField name="stripe_fee" type="number">
+  The fee charged by Stripe for processing the payment.
+</ResponseField>
+
+<ResponseField name="application_fee" type="number">
+  The platform fee collected by your application.
+</ResponseField>
+
+<ResponseExample>
+
+```json 200
+{
+  "id": "trans_123abc...",
+  "wallet_id": "wall_789xyz...",
+  "amount": 95.0,
+  "currency": "USD",
+  "transaction_type": "deposit",
+  "payment_method": "card",
+  "status": "pending",
+  "total_amount_paid": 100.0,
+  "stripe_fee": 3.0,
+  "application_fee": 2.0,
+  "created_at": "2025-01-16T10:00:00Z"
+}
+```
+
+```json 400
+{
+  "detail": "Invalid deposit amount"
+}
+```
+
+```json 401
+{
+  "detail": "Missing or invalid API keys"
+}
+```
+
+```json 403
+{
+  "detail": "Transaction failed: Wallet is disabled"
+}
+```
+
+```json 404
+{
+  "detail": "Wallet not found"
+}
+```
+
+```json 429
+{
+  "detail": "Rate limit exceeded. Please try again later."
+}
+```
+
+</ResponseExample>
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://hpay-api.host-sl.com/api/v1/transactions/wallet/card-deposit/create \
+  --header 'api-key: YOUR_API_KEY' \
+  --header 'secret-key: YOUR_SECRET_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "wallet_id": "wall_789xyz...",
+    "amount": 100.00
+  }'
+```
+
+```python Python
+from hostpay import HostPay
+
+client = HostPay(api_key="YOUR_API_KEY", secret_key="YOUR_SECRET_KEY")
+
+deposit = client.deposits.card(
+    wallet_id="wall_789xyz...",
+    amount=100.00,
+)
+print(deposit["transaction_id"])
+```
+
+```typescript TypeScript
+import { HostPay } from "@hostpay/sdk";
+
+const client = new HostPay({ apiKey: "YOUR_API_KEY", secretKey: "YOUR_SECRET_KEY" });
+
+const deposit = await client.deposits.card({
+  walletId: "wall_789xyz...",
+  amount: 100.0,
+});
+console.log(deposit.transaction_id);
+```
+
+```php PHP
+<?php
+
+$curl = curl_init();
+
+curl_setopt_array($curl, [
+  CURLOPT_URL => "https://hpay-api.host-sl.com/api/v1/transactions/wallet/card-deposit/create",
+  CURLOPT_RETURNTRANSFER => true,
+  CURLOPT_ENCODING => "",
+  CURLOPT_MAXREDIRS => 10,
+  CURLOPT_TIMEOUT => 30,
+  CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+  CURLOPT_CUSTOMREQUEST => "POST",
+  CURLOPT_POSTFIELDS => json_encode([
+    'wallet_id' => 'wall_789xyz...',
+    'amount' => 100
+  ]),
+  CURLOPT_HTTPHEADER => [
+    "Content-Type: application/json",
+    "api-key: YOUR_API_KEY",
+    "secret-key: YOUR_SECRET_KEY"
+  ],
+]);
+
+$response = curl_exec($curl);
+$err = curl_error($curl);
+
+curl_close($curl);
+
+if ($err) {
+  echo "cURL Error #:" . $err;
+} else {
+  echo $response;
+}
+```
+
+</RequestExample>

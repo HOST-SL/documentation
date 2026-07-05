@@ -1,0 +1,131 @@
+---
+title: "Create Wallet"
+api: "POST /api/v1/wallets/create/{user_id}/"
+description: "Create a new wallet for a specific user"
+---
+
+## Endpoint
+
+```
+POST /api/v1/wallets/create/{user_id}/
+```
+
+## Path Parameters
+
+<ParamField path="user_id" type="string" required>
+  The unique identifier of the user to create a wallet for.
+</ParamField>
+
+## Headers
+
+<ParamField header="api-key" type="string" required>
+  Your application API key
+</ParamField>
+
+<ParamField header="secret-key" type="string" required>
+  Your application secret key
+</ParamField>
+
+## Response
+
+<ResponseField name="id" type="string">
+  The unique identifier of the created wallet.
+</ResponseField>
+
+<ResponseField name="user_id" type="string">
+  The ID of the user who owns the wallet.
+</ResponseField>
+
+<ResponseField name="balance" type="number">
+  The initial balance of the wallet (defaults to 0.0).
+</ResponseField>
+
+<ResponseField name="currency" type="string">
+  The currency of the wallet balance.
+</ResponseField>
+
+<ResponseField name="is_active" type="boolean">
+  Whether the wallet is currently active.
+</ResponseField>
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://hpay-api.host-sl.com/api/v1/wallets/create/user_123/ \
+  --header 'api-key: YOUR_API_KEY' \
+  --header 'secret-key: YOUR_SECRET_KEY'
+```
+
+```python Python
+from hostpay import HostPay
+
+client = HostPay(api_key="YOUR_API_KEY", secret_key="YOUR_SECRET_KEY")
+
+wallet = client.wallets.create("user_123")
+print(wallet["id"])
+```
+
+```typescript TypeScript
+import { HostPay } from "@hostpay/sdk";
+
+const client = new HostPay({ apiKey: "YOUR_API_KEY", secretKey: "YOUR_SECRET_KEY" });
+
+const wallet = await client.wallets.create("user_123");
+console.log(wallet.id);
+```
+
+```php PHP
+<?php
+$curl = curl_init();
+
+curl_setopt_array($curl, [
+  CURLOPT_URL => "https://hpay-api.host-sl.com/api/v1/wallets/create/user_123/",
+  CURLOPT_RETURNTRANSFER => true,
+  CURLOPT_POST => true,
+  CURLOPT_HTTPHEADER => [
+    "api-key: YOUR_API_KEY",
+    "secret-key: YOUR_SECRET_KEY"
+  ]
+]);
+
+$response = curl_exec($curl);
+curl_close($curl);
+
+echo $response;
+?>
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 - Success
+{
+  "id": "wall_123",
+  "user_id": "user_123",
+  "balance": 0.0,
+  "currency": "SLE",
+  "is_active": true
+}
+```
+
+```json 400 - Bad Request
+{
+  "detail": "Wallet already exists for this user"
+}
+```
+
+```json 401 - Unauthorized
+{
+  "detail": "Invalid application credentials"
+}
+```
+
+```json 404 - Not Found
+{
+  "detail": "User not found"
+}
+```
+
+</ResponseExample>

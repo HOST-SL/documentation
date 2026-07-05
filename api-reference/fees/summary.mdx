@@ -1,0 +1,83 @@
+---
+title: "Fee Summary"
+api: "GET /api/v1/fees/summary"
+description: "A human-readable summary of every fee your application charges, by transaction type."
+---
+
+Returns your application's complete fee structure — deposit, withdrawal, transfer, and escrow — with the configured percentages and which side (you or the end user) pays each fee. Useful for rendering a pricing/fees screen in your app.
+
+### Response
+
+<ResponseField name="application_id" type="string">
+  Your application's ID.
+</ResponseField>
+
+<ResponseField name="deposit" type="object">
+  Deposit fee summary: whether a fee applies, the percentage, and the provider fee estimates used.
+</ResponseField>
+
+<ResponseField name="withdrawal" type="object">
+  Withdrawal (payout/cashout) fee summary.
+</ResponseField>
+
+<ResponseField name="transfer" type="object">
+  Wallet-to-wallet transfer fee summary.
+</ResponseField>
+
+<ResponseField name="escrow" type="object">
+  Escrow release fee summary.
+</ResponseField>
+
+<ResponseField name="disclaimer" type="string">
+  Reminder that provider fees are estimates until settlement.
+</ResponseField>
+
+<ResponseExample>
+
+```json 200
+{
+  "application_id": "2e35e07e-...",
+  "deposit": { "fee_enabled": false, "application_fee_percentage": "1.0" },
+  "withdrawal": { "fee_enabled": false, "application_fee_percentage": "1.0" },
+  "transfer": { "fee_enabled": true, "application_fee_percentage": "1.0" },
+  "escrow": { "escrow_fee_percentage": "0.0" },
+  "disclaimer": "Provider fees are estimates until settlement."
+}
+```
+
+```json 401
+{
+  "detail": "Invalid credentials"
+}
+```
+
+</ResponseExample>
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url https://hpay-api.host-sl.com/api/v1/fees/summary \
+  --header 'api-key: YOUR_API_KEY' \
+  --header 'secret-key: YOUR_SECRET_KEY'
+```
+
+```python Python
+from hostpay import HostPay
+
+client = HostPay(api_key="YOUR_API_KEY", secret_key="YOUR_SECRET_KEY")
+
+summary = client.fees.summary()
+print(summary["transfer"])
+```
+
+```typescript TypeScript
+import { HostPay } from "@hostpay/sdk";
+
+const client = new HostPay({ apiKey: "YOUR_API_KEY", secretKey: "YOUR_SECRET_KEY" });
+
+const summary = await client.fees.summary();
+console.log(summary.transfer);
+```
+
+</RequestExample>

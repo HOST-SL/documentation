@@ -1,0 +1,242 @@
+---
+title: "Currency & Conversions"
+description: "Understanding how HOST Pay handles currency and automatic conversions"
+---
+
+## Overview
+
+HOST Pay uses a **configurable base currency** (e.g., USD or SLE) for all wallet balances and internal transactions. For applications using USD as their base currency, the system automatically handles conversion for Sierra Leone's mobile money transactions.
+
+## How It Works
+
+### Configurable Base Currency
+
+Each application in HOST Pay defines its own **base currency** (defaulting to USD) which is used for all internal accounting. This means:
+
+- ✅ Wallet balances are stored in the base currency
+- ✅ Peer-to-peer transfers are processed in the base currency
+- ✅ Transaction history shows amounts in the base currency
+- ✅ API responses return balances in the base currency
+
+### Mobile Money Transactions: SLE Input
+
+When users make **mobile money deposits or withdrawals** through Monime (Orange Money, Africell Money), they enter amounts in **Sierra Leone Leones (SLE)**. If your application's base currency is different (e.g., USD), HOST Pay performs an automatic conversion.
+
+<CardGroup cols={2}>
+  <Card title="Deposits" icon="arrow-down">
+    User enters SLE amount → System converts to Base Currency → Wallet credited
+  </Card>
+  <Card title="Withdrawals" icon="arrow-up">
+    User requests SLE amount → System converts from Base Currency → Withdrawn in
+    SLE
+  </Card>
+</CardGroup>
+
+## Conversion Process
+
+<Steps>
+  <Step title="User Initiates Transaction">
+    User enters the amount in Sierra Leone Leones (SLE) for their mobile money
+    transaction
+  </Step>
+  <Step title="Real-time Exchange Rate">
+    HOST Pay fetches the current exchange rate between the transaction currency
+    and your application's base currency from a reliable source
+  </Step>
+  <Step title="Automatic Conversion">
+    The system converts the SLE amount to the application's base currency using
+    the current exchange rate
+  </Step>
+  <Step title="Transaction Processing">
+    The converted amount is used for the wallet transaction
+  </Step>
+  <Step title="Balance Update">
+    The wallet balance is updated in the base currency and displayed to the user
+  </Step>
+</Steps>
+
+## Exchange Rate Updates
+
+<AccordionGroup>
+  <Accordion title="How Often Are Rates Updated?">
+    Exchange rates are fetched in real-time for each transaction to ensure accuracy and fairness for both deposits and withdrawals.
+  </Accordion>
+
+{" "}
+
+<Accordion title="Which Exchange Rate Source?">
+  HOST Pay uses reliable financial data providers to fetch current exchange
+  rates. The exact rate used is included in each transaction response.
+</Accordion>
+
+{" "}
+
+<Accordion title="Rate Transparency">
+  Every mobile money transaction response includes the exchange rate used, so
+  users can verify the conversion calculation.
+</Accordion>
+
+  <Accordion title="Test Mode Rates">
+    In Test Mode, a fixed exchange rate may be used for consistent testing. Check your test environment configuration for the current test rate.
+  </Accordion>
+</AccordionGroup>
+
+## Card Payments (Stripe)
+
+Card payments through Stripe are typically processed in **USD**. If your application's base currency is different, the amount will be converted and credited to the wallet in the base currency:
+
+```json
+{
+  "wallet_id": "wallet_abc123",
+  "amount": 10.0, // USD amount
+  "currency": "USD",
+  "payment_method": "card"
+}
+```
+
+Users see USD amounts when paying with credit/debit cards via Stripe.
+
+## Peer-to-Peer Transfers
+
+All wallet-to-wallet transfers happen in the application's **base currency**:
+
+```json
+{
+  "sender_wallet_id": "wallet_abc123",
+  "recipient_username": "john_doe",
+  "amount": 5.0, // USD
+  "currency": "USD"
+}
+```
+
+There is no currency conversion for P2P transfers since both wallets use the same base currency within a single application.
+
+## API Implementation
+
+### Specifying Currency in Requests
+
+When making API calls for mobile money transactions:
+
+<CodeGroup>
+
+```javascript JavaScript
+// Mobile money deposit (user enters SLE)
+const depositResponse = await fetch(
+  "/api/v1/transactions/wallet/mobile-money-deposit",
+  {
+    method: "POST",
+    headers: {
+      "api-key": "YOUR_API_KEY",
+      "secret-key": "YOUR_SECRET_KEY",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      wallet_id: "wallet_abc123",
+      amount: 100000, // Amount in SLE
+      currency: "SLE", // Specify currency
+    }),
+  }
+);
+```
+
+```python Python
+# Mobile money withdrawal (user requests SLE)
+response = requests.post(
+    'https://hpay-api.host-sl.com/api/v1/transactions/wallet/mobile-money-cashout',
+    headers={
+        'api-key': 'YOUR_API_KEY',
+        'secret-key': 'YOUR_SECRET_KEY'
+    },
+    json={
+        'wallet_id': 'wallet_abc123',
+        'amount': 50000,       # Amount in SLE
+        'currency': 'SLE'      # Specify currency
+    }
+)
+```
+
+```php PHP
+// Card deposit (direct USD)
+$response = $client->post('/api/v1/transactions/wallet/card-deposit/create', [
+    'headers' => [
+        'api-key' => 'YOUR_API_KEY',
+        'secret-key' => 'YOUR_SECRET_KEY'
+    ],
+    'json' => [
+        'wallet_id' => 'wallet_abc123',
+        'amount' => 10.00,     // Amount in USD
+        'currency' => 'USD'    // No conversion needed
+    ]
+]);
+```
+
+</CodeGroup>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Display Both Currencies to Users">
+    When showing transaction details, display both the original SLE amount and the converted base-currency amount for transparency.
+  </Accordion>
+
+{" "}
+
+<Accordion title="Store Exchange Rates">
+  Save the exchange rate used for each transaction in your database for
+  record-keeping and reconciliation.
+</Accordion>
+
+{" "}
+
+<Accordion title="Handle Rate Fluctuations">
+  Inform users that exchange rates fluctuate and the final base-currency amount may vary
+  slightly from estimates.
+</Accordion>
+
+  <Accordion title="Test Conversions Thoroughly">
+    Use Test Mode to verify your currency conversion logic before going live with real money.
+  </Accordion>
+</AccordionGroup>
+
+## Common Questions
+
+<AccordionGroup>
+  <Accordion title="Can I change my base currency?">
+    Yes, the base currency is configurable per application. You can set it to USD, SLE, or other supported currencies during application setup. Internal accounting will be performed in your chosen currency.
+  </Accordion>
+
+{" "}
+
+<Accordion title="What if the exchange rate changes during a transaction?">
+  The exchange rate is locked at the moment the transaction is initiated. The
+  rate will not change even if the transaction takes time to complete.
+</Accordion>
+
+{" "}
+
+<Accordion title="Are there fees for currency conversion?">
+  Currency conversion is included in the transaction. Check your application's
+  fee configuration for any transaction fees that may apply.
+</Accordion>
+
+  <Accordion title="Can users see the exchange rate before confirming?">
+    Yes, your application should fetch and display the current exchange rate and converted amount before the user confirms the transaction.
+  </Accordion>
+</AccordionGroup>
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Mobile Money Deposits" icon="mobile" href="/guides/testing">
+    Learn how to test mobile money deposits
+  </Card>
+  <Card title="Webhooks" icon="webhook" href="/webhooks/overview">
+    Handle transaction events with webhooks
+  </Card>
+  <Card title="Test Mode" icon="flask" href="/environments">
+    Understand test and live environments
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/introduction">
+    Complete API documentation
+  </Card>
+</CardGroup>

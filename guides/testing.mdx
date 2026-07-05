@@ -1,0 +1,502 @@
+---
+title: "Testing Guide"
+description: "Learn how to test your integration with HOST Pay"
+---
+
+## Overview
+
+Testing is crucial for ensuring your integration works correctly before going live. HOST Pay provides a complete Test Mode environment that mirrors production functionality without processing real money.
+
+## Test Mode Features
+
+<CardGroup cols={2}>
+  <Card title="Mock Services" icon="flask">
+    Simulated payment providers
+  </Card>
+  <Card title="Isolated Data" icon="database">
+    Separate test database
+  </Card>
+  <Card title="Full API Access" icon="code">
+    All endpoints available
+  </Card>
+  <Card title="Webhook Events" icon="webhook">
+    Real webhook notifications
+  </Card>
+</CardGroup>
+
+## Getting Test Credentials
+
+<Steps>
+  <Step title="Log In">Access the HOST Pay dashboard</Step>
+  <Step title="Select Application">Navigate to your application</Step>
+  <Step title="Get Test Keys">Generate Test Mode API credentials</Step>
+  <Step title="Store Securely">Save in environment variables</Step>
+</Steps>
+
+## Test Mode Payment Methods
+
+### Mobile Money (Monime)
+
+In Test Mode, mobile money uses **MockMonimePaymentService**:
+
+```python
+from hostpay import HostPay
+
+client = HostPay(
+    api_key="test_ak_1234567890",     # Test Mode keys -> mock provider
+    secret_key="test_sk_0987654321",
+)
+
+# Make a mobile money deposit in Test Mode
+deposit = client.deposits.mobile_money(
+    wallet_id="wallet_test_abc123",
+    amount=100,
+)
+
+# Returns a mock USSD code
+# {
+#     "transaction_id": "txn_test_xyz789",
+#     "payment_code": {
+#         "ussdCode": "*715*1234567890#",
+#         "status": "pending"
+#     }
+# }
+```
+
+**Features:**
+
+- ✅ Instant mock responses
+- ✅ No real money involved
+- ✅ Predictable behavior
+- ✅ Webhook events triggered
+
+#### Magic test numbers
+
+In **Test Mode**, the outcome of a mobile-money deposit is driven by the
+**user's phone number** — no second API call needed. Create a user with one of
+these numbers, then any deposit into that user's wallet resolves deterministically
+(the wallet is credited/failed and your webhook fires, just like production):
+
+| Phone number    | Deposit outcome                                             |
+| --------------- | ----------------------------------------------------------- |
+| `+23299000001`  | ✅ Completes (wallet credited, `deposit.completed` webhook)  |
+| `+23299000002`  | ❌ Fails (`deposit.failed` webhook)                          |
+| `+23299000009`  | ⏳ Stays **pending** (for testing the async completion path) |
+| _any other_     | ✅ Completes                                                 |
+
+For **payouts** (`/transactions/wallet/mobile-money-cashout/`), the same magic
+numbers apply to the **recipient `phone_number` in the request** — so you can
+trigger a decline per-transaction without pre-configuring a user:
+
+| Recipient phone | Payout outcome                                              |
+| --------------- | ----------------------------------------------------------- |
+| `+23299000002`  | ❌ Declined — wallet **not** debited, request returns `400`  |
+| _any other_     | ✅ Completes (wallet debited, `payout.succeeded` webhook)    |
+
+<Note>
+  Test Mode payouts settle immediately, so there is no merchant-controlled
+  "pending" payout — only `+23299000002` changes the outcome (a decline); every
+  other number completes.
+</Note>
+
+<Note>
+  For the `+23299000009` (pending) case, or to complete a pending deposit
+  manually, call the completion endpoint directly:
+
+  ```python
+  requests.post(
+      f"{BASE_URL}/testing/simulate-monime-webhook",
+      headers=headers,
+      json={"transaction_id": deposit["transaction_id"], "status": "successful"},
+  )
+  ```
+
+  This endpoint is available in **every** environment (including the hosted
+  sandbox) but only accepts **Test Mode** credentials — a Live Mode key is
+  rejected with `403`. Magic numbers and this endpoint never affect Live Mode.
+</Note>
+
+### Card Payments (Stripe)
+
+Test Mode uses Stripe's test card numbers:
+
+**Success Cards:**
+
+```
+4242 4242 4242 4242  (Visa - succeeds)
+5555 5555 5555 4444  (Mastercard - succeeds)
+```
+
+**Decline Cards:**
+
+```
+4000 0000 0000 0002  (Card declined)
+4000 0000 0000 9995  (Insufficient funds)
+4000 0000 0000 0069  (Expired card)
+```
+
+**Use any:**
+
+- Future expiry date (e.g., 12/30)
+- Any 3-digit CVC (e.g., 123)
+- Any billing address
+
+```python
+# Card deposit example
+deposit = client.deposits.card(
+    wallet_id="wallet_test_abc123",
+    amount=100.00,
+)
+# Complete the payment client-side with a Stripe test card (e.g. 4242...)
+```
+
+## Test Scenarios
+
+### Scenario 1: Happy Path
+
+Test the complete user flow:
+
+<CodeGroup>
+
+```python Python
+from hostpay import HostPay
+
+client = HostPay(
+    api_key="test_ak_1234567890",
+    secret_key="test_sk_0987654321",
+)
+
+# 1. Create user (app_user_id, name, phone_number are required).
+#    +23299000001 is the magic number whose deposits always complete.
+user = client.users.create(
+    app_user_id="user_123",
+    name="Test User",
+    email="test@example.com",
+    phone_number="+23299000001",
+)
+print(f"Created user: {user['id']}")
+
+# 2. Create the user's wallet (wallets are not auto-created)
+wallet = client.wallets.create(user["id"])
+print(f"Created wallet: {wallet['id']}, Balance: {wallet['balance']}")
+
+# 3. Make a deposit. In Test Mode this auto-completes (magic number),
+#    so the wallet is credited right away.
+deposit = client.deposits.mobile_money(wallet_id=wallet["id"], amount=100)
+print(f"Deposit completed: {deposit['transaction_id']}")
+
+# 4. Check balance
+balance = client.wallets.balance(wallet["id"])
+print(f"Balance: {balance['balance']}")
+```
+
+```typescript TypeScript
+import { HostPay } from "@hostpay/sdk";
+
+const client = new HostPay({
+  apiKey: "test_ak_1234567890",
+  secretKey: "test_sk_0987654321",
+});
+
+// 1. Create user (appUserId, name, phoneNumber are required).
+//    +23299000001 is the magic number whose deposits always complete.
+const user = await client.users.create({
+  appUserId: "user_123",
+  name: "Test User",
+  email: "test@example.com",
+  phoneNumber: "+23299000001",
+});
+console.log(`Created user: ${user.id}`);
+
+// 2. Create the user's wallet (wallets are not auto-created)
+const wallet = await client.wallets.create(user.id);
+console.log(`Created wallet: ${wallet.id}, Balance: ${wallet.balance}`);
+
+// 3. Make a deposit. In Test Mode this auto-completes (magic number),
+//    so the wallet is credited right away.
+const deposit = await client.deposits.mobileMoney({
+  walletId: wallet.id,
+  amount: 100,
+});
+console.log(`Deposit completed: ${deposit.transaction_id}`);
+
+// 4. Check balance
+const balance = await client.wallets.balance(wallet.id);
+console.log(`Balance: ${balance.balance}`);
+```
+
+</CodeGroup>
+
+### Scenario 2: Error Handling
+
+Test error cases:
+
+```python
+# Test invalid credentials
+from hostpay import HostPay, AuthenticationError, InvalidRequestError
+
+# Test invalid credentials -> AuthenticationError (401/403)
+bad_client = HostPay(api_key="invalid_key", secret_key="invalid_secret")
+try:
+    bad_client.users.get("any-user-id")
+except AuthenticationError as e:
+    print(f"Correctly rejected invalid credentials: {e.status_code}")
+
+# Test disabled wallet -> InvalidRequestError / AuthenticationError
+try:
+    client.deposits.mobile_money(wallet_id="wallet_test_disabled", amount=100)
+except (InvalidRequestError, AuthenticationError) as e:
+    print(f"Correctly blocked transaction: {e.status_code}: {e}")
+
+# Test invalid amount -> InvalidRequestError (422)
+try:
+    client.deposits.mobile_money(wallet_id=wallet["id"], amount=-50)
+except InvalidRequestError as e:
+    print(f"Correctly rejected invalid amount: {e.status_code}")
+```
+
+### Scenario 3: Wallet Transfers
+
+Test peer-to-peer transfers:
+
+```python
+from decimal import Decimal
+
+# Create two users (magic number: deposits auto-complete in Test Mode)
+alice = client.users.create(
+    app_user_id="alice_1", name="Alice", username="alice",
+    email="alice@example.com", phone_number="+23299000001",
+)
+bob = client.users.create(
+    app_user_id="bob_1", name="Bob", username="bob",
+    email="bob@example.com", phone_number="+23299000001",
+)
+
+# Create their wallets
+wallet1 = client.wallets.create(alice["id"])
+wallet2 = client.wallets.create(bob["id"])
+
+# Fund Alice's wallet
+client.deposits.mobile_money(wallet_id=wallet1["id"], amount=100)
+
+# Transfer from Alice to Bob (recipient by username, phone, or email)
+transfer = client.transfers.create(
+    sender_wallet_id=wallet1["id"],
+    recipient_identifier="bob",
+    amount=50.00,
+)
+print(f"Transfer completed: {transfer['id']}")
+
+# Verify balances moved (exact values depend on your fee configuration)
+alice_balance = Decimal(str(client.wallets.balance(wallet1["id"])["balance"]))
+bob_balance = Decimal(str(client.wallets.balance(wallet2["id"])["balance"]))
+assert bob_balance > 0
+print("Balances correct after transfer")
+```
+
+## Testing Webhooks
+
+### Local Testing with ngrok
+
+<Steps>
+  <Step title="Install ngrok">
+    ```bash # Download from ngrok.com or npm install -g ngrok ```
+  </Step>
+  <Step title="Start Your Server">
+    ```bash python app.py # or node server.js ```
+  </Step>
+  <Step title="Create Tunnel">```bash ngrok http 3000 ```</Step>
+  <Step title="Configure Webhook">
+    Add the ngrok URL to your dashboard:
+    `https://abc123.ngrok.io/webhooks/hostpay`
+  </Step>
+  <Step title="Test">Make a transaction and verify webhook delivery</Step>
+</Steps>
+
+### Webhook Testing Example
+
+```python
+from fastapi import FastAPI, HTTPException, Request
+from hostpay import HostPay, SignatureVerificationError
+import json
+
+app = FastAPI()
+client = HostPay(api_key="test_ak_...", secret_key="test_sk_...")
+WEBHOOK_SIGNING_SECRET = "whsec_..."  # from your webhook subscription
+
+@app.post("/webhooks/hostpay")
+async def handle_webhook(request: Request):
+    # Verify the signature — see /webhooks/security. Pass the RAW body.
+    try:
+        event = client.webhooks.construct_event(
+            payload=await request.body(),
+            headers=request.headers,
+            secret=WEBHOOK_SIGNING_SECRET,
+        )
+    except SignatureVerificationError:
+        raise HTTPException(status_code=400, detail="Invalid signature")
+
+    print(f"Received webhook: {event['event']}")
+
+    # Log for testing
+    with open("webhook_log.json", "a") as f:
+        f.write(json.dumps(event) + "\n")
+
+    return {"ok": True}
+
+# Run with: uvicorn app:app --port 3000
+```
+
+## Test Data Management
+
+### Cleaning Up Test Data
+
+```python
+# Delete test users (Test Mode only)
+def cleanup_test_users():
+    users = requests.get(
+        "https://hpay-api.host-sl.com/api/v1/users/",
+        headers=test_headers
+    ).json()
+
+    for user in users:
+        if user['email'].endswith('@test.example.com'):
+            requests.delete(
+                f"https://hpay-api.host-sl.com/api/v1/users/{user['id']}",
+                headers=test_headers
+            )
+            print(f"🗑️ Deleted test user: {user['email']}")
+
+# Run cleanup
+cleanup_test_users()
+```
+
+<Warning>
+  Test Mode data is isolated and can be safely deleted. Be careful not to use
+  live credentials when cleaning up!
+</Warning>
+
+## Automated Testing
+
+### End-to-End Smoke Test
+
+The [SDK repository](https://github.com/HOST-SL/hostpay-sdk) ships a runnable
+smoke test (`examples/smoke_sdk.py`) that walks the full money path — user →
+wallet → deposit → transfer → escrow → payout — against a Test Mode instance
+and asserts each step:
+
+```bash
+HOSTPAY_BASE_URL=https://hpay-api.host-sl.com \
+HOSTPAY_API_KEY=test_ak_... HOSTPAY_SECRET_KEY=test_sk_... \
+python examples/smoke_sdk.py
+```
+
+It uses the magic test numbers to complete deposits, so it works against any
+environment with Test Mode credentials.
+
+### Writing Your Own Tests
+
+Use the [Python SDK](/sdks) with Test Mode credentials — deposits complete
+instantly via the magic numbers, so integration tests stay fast and
+deterministic:
+
+```python
+import os
+import uuid
+import pytest
+from decimal import Decimal
+from hostpay import HostPay
+
+@pytest.fixture
+def client():
+    return HostPay(
+        api_key=os.environ["HOSTPAY_TEST_API_KEY"],
+        secret_key=os.environ["HOSTPAY_TEST_SECRET_KEY"],
+    )
+
+def test_deposit_credits_wallet(client):
+    tag = uuid.uuid4().hex[:8]  # unique identifiers per run
+    user = client.users.create(
+        app_user_id=f"test-{tag}",
+        name="Test User",
+        email=f"test-{tag}@example.com",
+        phone_number="+23299000001",  # magic: deposits complete
+    )
+    wallet = client.wallets.create(user["id"])
+    before = Decimal(str(wallet["balance"]))
+
+    client.deposits.mobile_money(wallet_id=wallet["id"], amount=100)
+
+    after = Decimal(str(client.wallets.balance(wallet["id"])["balance"]))
+    assert after > before
+
+def test_failed_deposit_does_not_credit(client):
+    tag = uuid.uuid4().hex[:8]
+    user = client.users.create(
+        app_user_id=f"fail-{tag}",
+        name="Fail User",
+        email=f"fail-{tag}@example.com",
+        phone_number="+23299000002",  # magic: deposits fail
+    )
+    wallet = client.wallets.create(user["id"])
+
+    client.deposits.mobile_money(wallet_id=wallet["id"], amount=100)
+
+    assert Decimal(str(client.wallets.balance(wallet["id"])["balance"])) == 0
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Use Unique Identifiers">
+    Generate unique emails/phone numbers for each test run to avoid conflicts:
+    ```python
+    email = f"test-{uuid.uuid4()}@example.com"
+    ```
+  </Accordion>
+
+{" "}
+
+<Accordion title="Clean Up After Tests">
+  Delete test data after each test run to keep the environment clean.
+</Accordion>
+
+{" "}
+
+<Accordion title="Test Edge Cases">
+  - Zero amounts - Negative amounts - Very large amounts - Invalid wallet IDs -
+  Disabled accounts - Insufficient balances
+</Accordion>
+
+{" "}
+
+<Accordion title="Test Webhooks Thoroughly">
+  Verify all webhook events are received and handled correctly.
+</Accordion>
+
+  <Accordion title="Monitor Test Mode Usage">
+    Track API calls and errors to identify integration issues early.
+  </Accordion>
+</AccordionGroup>
+
+## Going Live Checklist
+
+Before switching to Live Mode:
+
+<Checklist>
+  - [ ] All test scenarios pass - [ ] Error handling tested - [ ] Webhooks
+  verified - [ ] Edge cases covered - [ ] Load testing completed - [ ] Security
+  audit done - [ ] Documentation reviewed - [ ] Team trained - [ ] Monitoring
+  configured - [ ] Rollback plan ready
+</Checklist>
+
+## Need Help?
+
+<CardGroup cols={2}>
+  <Card title="Test Mode Guide" href="/environments">
+    Learn about Test vs Live environments
+  </Card>
+  <Card title="Support" href="mailto:support@hostpay.com">
+    Get help with testing
+  </Card>
+</CardGroup>

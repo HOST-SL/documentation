@@ -1,0 +1,87 @@
+---
+title: "Connect Account Status"
+api: "GET /api/v1/transactions/wallet/{wallet_id}/connect/status"
+description: "Sync and retrieve the current verification status of a user's Stripe Connect account."
+---
+
+Fetches the latest account state from Stripe, updates the local record, and emits an `account.updated` webhook event — immediate feedback, and a fallback if a webhook was missed.
+
+### Path Parameters
+
+<ParamField path="wallet_id" type="string" required>
+  The wallet whose owner's Connect account to check.
+</ParamField>
+
+### Response
+
+<ResponseField name="account_id" type="string">
+  The Stripe Connect account ID.
+</ResponseField>
+
+<ResponseField name="payouts_enabled" type="boolean">
+  Whether the account can receive payouts.
+</ResponseField>
+
+<ResponseField name="charges_enabled" type="boolean">
+  Whether the account can accept charges.
+</ResponseField>
+
+<ResponseField name="is_verified" type="boolean">
+  True when payouts or charges are enabled.
+</ResponseField>
+
+<ResponseField name="currently_due" type="string[]">
+  Verification requirements Stripe still needs.
+</ResponseField>
+
+<ResponseExample>
+
+```json 200
+{
+  "message": "Status synchronized successfully.",
+  "account_id": "acct_1ABC...",
+  "payouts_enabled": true,
+  "charges_enabled": true,
+  "is_verified": true,
+  "currently_due": [],
+  "pending_verification": [],
+  "disabled_reason": null
+}
+```
+
+```json 400
+{
+  "detail": "User does not have a Stripe Connect account associated."
+}
+```
+
+</ResponseExample>
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url https://hpay-api.host-sl.com/api/v1/transactions/wallet/9a8b7c6d-.../connect/status \
+  --header 'api-key: YOUR_API_KEY' \
+  --header 'secret-key: YOUR_SECRET_KEY'
+```
+
+```python Python
+from hostpay import HostPay
+
+client = HostPay(api_key="YOUR_API_KEY", secret_key="YOUR_SECRET_KEY")
+
+status = client.connect.status("9a8b7c6d-...")
+print(status["is_verified"], status["currently_due"])
+```
+
+```typescript TypeScript
+import { HostPay } from "@hostpay/sdk";
+
+const client = new HostPay({ apiKey: "YOUR_API_KEY", secretKey: "YOUR_SECRET_KEY" });
+
+const status = await client.connect.status("9a8b7c6d-...");
+console.log(status.is_verified, status.currently_due);
+```
+
+</RequestExample>

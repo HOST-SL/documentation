@@ -1,0 +1,82 @@
+---
+title: "Sending Payouts"
+description: "Withdrawing funds from user wallets to external mobile money or bank accounts"
+---
+
+## Overview
+
+Payouts allow users to move money out of their HOST Pay wallets and into their real-world bank or mobile money accounts.
+
+## Supported Payout Methods
+
+<CardGroup cols={2}>
+  <Card title="Mobile Money Cashout" icon="mobile-signal">
+    Instant withdrawals to Orange Money or Africell Money in Sierra Leone.
+  </Card>
+  <Card title="Stripe Payouts" icon="building-columns">
+    Standard bank transfers via Stripe Connect (coming soon).
+  </Card>
+</CardGroup>
+
+---
+
+## 1. Mobile Money Cashouts (Monime)
+
+This is the fastest way for users to access their funds in local currency (SLE).
+
+### Requesting a Cashout
+To initiate a withdrawal, use the [Mobile Money Cashout](/api-reference/transactions/mobile-money-cashout) endpoint.
+
+1. **Parameters**: Provide the `wallet_id`, `amount`, and the recipient's phone number.
+3. **Execution**: Once sent, Monime processes the request and funds are deposited into the user's mobile money account.
+
+### Currency Handling
+The `amount` in a mobile money cashout request is always specified in **Sierra Leone Leones (SLE)**.
+
+- **If Base Currency is SLE**: No conversion occurs. The exact SLE amount is deducted from the wallet.
+- **If Base Currency is USD**: The system automatically calculates the equivalent USD amount to deduct based on the real-time exchange rate.
+
+See the [Currency & Conversions](/guides/currency-conversion) guide for more details.
+
+---
+
+## 2. Stripe Payouts
+
+For applications that integrate with Stripe Connect, bank payouts are available. This is typically used for business-level withdrawals rather than individual user cashouts in local markets.
+
+- **Standard**: Takes 2-5 business days.
+- **Instant**: Available in supported regions for a small fee.
+
+---
+
+## Payout Statuses
+
+Payouts go through several stages:
+
+| Status | Description |
+| :--- | :--- |
+| `pending` | The payout has been initiated and is awaiting provider confirmation. |
+| `completed` | The funds have been successfully settled in the destination account. |
+| `failed` | The payout could not be processed (e.g., incorrect phone number or rejected by provider). |
+| `cancelled` | The payout was cancelled by the user or an administrator. |
+
+---
+
+## Fees
+
+Withdrawal fees are configurable in your HOST Pay Dashboard. You can set:
+- **Flat Fee**: A fixed amount per cashout.
+- **Percentage Fee**: A percentage of the withdrawn amount.
+
+These fees are deducted from the user's wallet before the cashout is processed.
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Transaction History" icon="list" href="/api-reference/transactions/list">
+    Track the status of all payouts
+  </Card>
+  <Card title="Webhooks" icon="webhook" href="/webhooks/overview">
+    Get notified when payouts complete
+  </Card>
+</CardGroup>

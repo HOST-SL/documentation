@@ -1,0 +1,115 @@
+---
+title: "Create Subscription"
+api: "POST /api/v1/webhooks/subscriptions"
+description: "Subscribe an HTTPS endpoint to webhook events for your application."
+---
+
+Creates a webhook subscription. Deliveries are signed — verify them with the returned secret and the SDK's `construct_event` (see [Webhook security](/webhooks/security)).
+
+<Warning>
+  The signing `secret` is returned **only in this response**. Store it securely —
+  it cannot be retrieved again, only [rotated](/api-reference/webhooks/rotate-secret).
+</Warning>
+
+### Request Body
+
+<ParamField body="target_url" type="string" required>
+  The HTTPS endpoint to deliver events to. Internal/private addresses are rejected.
+</ParamField>
+
+<ParamField body="events" type="string[]" required>
+  The event types to subscribe to, e.g. `["deposit.completed", "payout.failed"]`.
+</ParamField>
+
+<ParamField body="description" type="string">
+  An optional label for this subscription.
+</ParamField>
+
+<ParamField body="ip_allowlist" type="string[]">
+  Optional list of source IPs allowed to receive deliveries.
+</ParamField>
+
+<ParamField body="payload_version" type="string">
+  Payload schema version. Defaults to the current version.
+</ParamField>
+
+### Response
+
+<ResponseField name="secret" type="string">
+  The signing secret — shown once.
+</ResponseField>
+
+<ResponseField name="subscription" type="object">
+  The created subscription (same shape as [list subscriptions](/api-reference/webhooks/list-subscriptions)).
+</ResponseField>
+
+<ResponseExample>
+
+```json 201
+{
+  "secret": "whsec_9f8e7d6c...",
+  "subscription": {
+    "id": "7c1d2e3f-...",
+    "application_id": "2e35e07e-...",
+    "target_url": "https://example.com/webhooks/hostpay",
+    "events": ["deposit.completed", "payout.failed"],
+    "active": true,
+    "ip_allowlist": null,
+    "payload_version": "2025-01",
+    "secret_preview": "...k3Qz",
+    "created_at": "2026-07-04T10:30:00Z",
+    "updated_at": "2026-07-04T10:30:00Z"
+  }
+}
+```
+
+```json 400
+{
+  "detail": "The provided target_url is not allowed (internal or private address)."
+}
+```
+
+</ResponseExample>
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://hpay-api.host-sl.com/api/v1/webhooks/subscriptions \
+  --header 'api-key: YOUR_API_KEY' \
+  --header 'secret-key: YOUR_SECRET_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "target_url": "https://example.com/webhooks/hostpay",
+    "events": [
+        "deposit.completed",
+        "payout.failed"
+    ]
+  }'
+```
+
+```python Python
+from hostpay import HostPay
+
+client = HostPay(api_key="YOUR_API_KEY", secret_key="YOUR_SECRET_KEY")
+
+sub = client.webhooks.subscriptions.create(
+    target_url="https://example.com/webhooks/hostpay",
+    events=["deposit.completed", "payout.failed"],
+)
+store_secret(sub["secret"])  # shown once!
+```
+
+```typescript TypeScript
+import { HostPay } from "@hostpay/sdk";
+
+const client = new HostPay({ apiKey: "YOUR_API_KEY", secretKey: "YOUR_SECRET_KEY" });
+
+const sub = await client.webhooks.subscriptions.create({
+  targetUrl: "https://example.com/webhooks/hostpay",
+  events: ["deposit.completed", "payout.failed"],
+});
+storeSecret(sub.secret); // shown once!
+```
+
+</RequestExample>

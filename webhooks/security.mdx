@@ -1,0 +1,296 @@
+---
+title: "Webhook Security"
+description: "Verify webhook signatures to protect against spoofed requests"
+---
+
+<Warning>
+  Always verify webhook signatures before processing any event. Skipping this
+  step opens your application to spoofed requests.
+</Warning>
+
+## How Signatures Work
+
+HOST Pay signs every outgoing webhook using **HMAC-SHA256**. The signing input is:
+
+```
+timestamp + "." + compact_json_body
+```
+
+Where:
+- `timestamp` is the Unix epoch value from the `X-Webhook-Timestamp` header (as a string).
+- `compact_json_body` is the raw request body serialized with no extra whitespace.
+
+The resulting signature is hex-encoded and placed in the `X-HostPay-Signature` header with a `v1=` prefix (e.g., `v1=abc123...`).
+
+## Verification Steps
+
+1. Extract the raw timestamp from `X-Webhook-Timestamp`.
+2. Read the raw request body **before** parsing it as JSON.
+3. Construct the signed string: `timestamp + "." + raw_body`.
+4. Compute `HMAC-SHA256(secret, signed_string)` and hex-encode it.
+5. Compare your result to the value after the `v1=` prefix using a **constant-time** comparison.
+6. **Optional but recommended**: Reject requests where the timestamp is more than 5 minutes old to prevent replay attacks.
+
+## Verifying with the SDK (recommended)
+
+The official [SDKs](/sdks) implement all of the steps above — constant-time
+comparison and replay protection included. Pass the **raw** request body and
+headers straight from your framework:
+
+<CodeGroup>
+
+```python Python (FastAPI)
+from fastapi import FastAPI, HTTPException, Request
+from hostpay import HostPay, SignatureVerificationError
+
+app = FastAPI()
+client = HostPay(api_key="YOUR_API_KEY", secret_key="YOUR_SECRET_KEY")
+
+@app.post("/webhooks/hostpay")
+async def hostpay_webhook(request: Request):
+    try:
+        event = client.webhooks.construct_event(
+            payload=await request.body(),   # raw bytes, not request.json()
+            headers=request.headers,
+            secret=WEBHOOK_SIGNING_SECRET,
+        )
+    except SignatureVerificationError:
+        raise HTTPException(status_code=400, detail="Invalid signature")
+
+    if event.event == "deposit.completed":
+        ...  # handle it
+    return {"ok": True}
+```
+
+```typescript TypeScript (Express)
+import express from "express";
+import { HostPay, SignatureVerificationError } from "@hostpay/sdk";
+
+const client = new HostPay({ apiKey: "YOUR_API_KEY", secretKey: "YOUR_SECRET_KEY" });
+
+app.post("/webhooks/hostpay", express.raw({ type: "*/*" }), (req, res) => {
+  try {
+    const event = client.webhooks.constructEvent(
+      req.body,          // raw body — use express.raw, not express.json
+      req.headers,
+      WEBHOOK_SIGNING_SECRET,
+    );
+    if (event.event === "deposit.completed") {
+      // handle it
+    }
+    res.sendStatus(200);
+  } catch (err) {
+    if (err instanceof SignatureVerificationError) return res.sendStatus(400);
+    throw err;
+  }
+});
+```
+
+</CodeGroup>
+
+Deliveries older than 5 minutes are rejected by default (pass a custom
+`tolerance` in seconds to change this).
+
+## Verifying Manually
+
+Implementing the check yourself in another language:
+
+<CodeGroup>
+
+```python Python (FastAPI)
+from fastapi import FastAPI, HTTPException, Request
+import hmac
+import hashlib
+import time
+import json
+
+app = FastAPI()
+WEBHOOK_SECRET = "your_webhook_secret"
+
+@app.post("/webhooks/hostpay")
+async def handle_webhook(request: Request):
+    # Read raw body before any parsing
+    raw_body = (await request.body()).decode("utf-8")
+
+    # Extract headers
+    signature_header = request.headers.get("X-HostPay-Signature", "")
+    timestamp = request.headers.get("X-Webhook-Timestamp", "")
+
+    # Reject stale webhooks (optional but recommended)
+    if abs(time.time() - int(timestamp)) > 300:
+        raise HTTPException(status_code=400, detail="Webhook timestamp too old")
+
+    # Verify the signature
+    if not verify_signature(raw_body, timestamp, signature_header):
+        raise HTTPException(status_code=401, detail="Invalid signature")
+
+    # Parse and handle the event
+    event = json.loads(raw_body)
+    data = event.get("data", {})
+
+    # Route by status in the data payload
+    status = data.get("status")
+    if status == "succeeded":
+        handle_success(data)
+    elif status == "failed":
+        handle_failure(data)
+
+    return {"ok": True}
+
+
+def verify_signature(raw_body: str, timestamp: str, signature_header: str) -> bool:
+    # Signature header format: "v1=<hex_digest>"
+    if not signature_header.startswith("v1="):
+        return False
+    provided_sig = signature_header[3:]
+
+    signed_string = f"{timestamp}.{raw_body}"
+    expected_sig = hmac.new(
+        WEBHOOK_SECRET.encode("utf-8"),
+        signed_string.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+
+    return hmac.compare_digest(provided_sig, expected_sig)
+
+
+def handle_success(data):
+    print(f"Transaction {data['id']} succeeded: {data['amount']} {data['currency']}")
+
+
+def handle_failure(data):
+    print(f"Transaction {data['id']} failed")
+```
+
+```javascript JavaScript (Express)
+const express = require("express");
+const crypto = require("crypto");
+
+const app = express();
+const WEBHOOK_SECRET = "your_webhook_secret";
+
+// Use raw body middleware for signature verification
+app.use(
+  "/webhooks/hostpay",
+  express.raw({ type: "application/json" })
+);
+
+app.post("/webhooks/hostpay", (req, res) => {
+  const rawBody = req.body.toString("utf8");
+  const signatureHeader = req.headers["x-hostpay-signature"] || "";
+  const timestamp = req.headers["x-webhook-timestamp"] || "";
+
+  // Reject stale webhooks (optional but recommended)
+  if (Math.abs(Date.now() / 1000 - parseInt(timestamp)) > 300) {
+    return res.status(400).send("Webhook timestamp too old");
+  }
+
+  // Verify signature
+  if (!verifySignature(rawBody, timestamp, signatureHeader)) {
+    return res.status(401).send("Invalid signature");
+  }
+
+  // Parse and handle
+  const event = JSON.parse(rawBody);
+  const data = event.data || {};
+  const status = data.status;
+
+  if (status === "succeeded") {
+    handleSuccess(data);
+  } else if (status === "failed") {
+    handleFailure(data);
+  }
+
+  res.status(200).send("OK");
+});
+
+function verifySignature(rawBody, timestamp, signatureHeader) {
+  if (!signatureHeader.startsWith("v1=")) return false;
+  const provided = signatureHeader.slice(3);
+
+  const signedString = `${timestamp}.${rawBody}`;
+  const expected = crypto
+    .createHmac("sha256", WEBHOOK_SECRET)
+    .update(signedString, "utf8")
+    .digest("hex");
+
+  return crypto.timingSafeEqual(
+    Buffer.from(provided, "hex"),
+    Buffer.from(expected, "hex")
+  );
+}
+
+function handleSuccess(data) {
+  console.log(`Transaction ${data.id} succeeded: ${data.amount} ${data.currency}`);
+}
+
+function handleFailure(data) {
+  console.log(`Transaction ${data.id} failed`);
+}
+
+app.listen(3000);
+```
+
+```php PHP
+<?php
+define('WEBHOOK_SECRET', 'your_webhook_secret');
+
+function handle_webhook() {
+    $raw_body  = file_get_contents('php://input');
+    $sig_header = $_SERVER['HTTP_X_HOSTPAY_SIGNATURE'] ?? '';
+    $timestamp  = $_SERVER['HTTP_X_WEBHOOK_TIMESTAMP'] ?? '';
+
+    // Reject stale webhooks (optional but recommended)
+    if (abs(time() - intval($timestamp)) > 300) {
+        http_response_code(400);
+        die('Webhook timestamp too old');
+    }
+
+    if (!verify_signature($raw_body, $timestamp, $sig_header)) {
+        http_response_code(401);
+        die('Invalid signature');
+    }
+
+    $event  = json_decode($raw_body, true);
+    $data   = $event['data'] ?? [];
+    $status = $data['status'] ?? '';
+
+    if ($status === 'succeeded') {
+        handle_success($data);
+    } elseif ($status === 'failed') {
+        handle_failure($data);
+    }
+
+    http_response_code(200);
+    echo 'OK';
+}
+
+function verify_signature(string $raw_body, string $timestamp, string $sig_header): bool {
+    if (strpos($sig_header, 'v1=') !== 0) {
+        return false;
+    }
+    $provided = substr($sig_header, 3);
+
+    $signed_string   = "{$timestamp}.{$raw_body}";
+    $expected        = hash_hmac('sha256', $signed_string, WEBHOOK_SECRET);
+
+    return hash_equals($provided, $expected);
+}
+
+function handle_success(array $data): void {
+    error_log("Transaction {$data['id']} succeeded: {$data['amount']} {$data['currency']}");
+}
+
+function handle_failure(array $data): void {
+    error_log("Transaction {$data['id']} failed");
+}
+
+handle_webhook();
+?>
+```
+
+</CodeGroup>
+
+<Tip>
+  Read the raw request body **before** any JSON parsing — re-serializing the parsed body changes whitespace and breaks signature verification.
+</Tip>

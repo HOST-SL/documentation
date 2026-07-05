@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 360" width="860" height="360" role="img" aria-label="HOST Pay — wallet and payment infrastructure">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0F172A"/>
+      <stop offset="1" stop-color="#022C22"/>
+    </linearGradient>
+    <linearGradient id="pv" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3ACE93"/>
+      <stop offset="1" stop-color="#00945E"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.72" cy="0.15" r="0.7">
+      <stop offset="0" stop-color="#00BC7F" stop-opacity="0.32"/>
+      <stop offset="1" stop-color="#00BC7F" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="frame"><rect width="860" height="360" rx="20"/></clipPath>
+  </defs>
+  <g clip-path="url(#frame)">
+    <rect width="860" height="360" fill="url(#bg)"/>
+    <rect width="860" height="360" fill="url(#glow)"/>
+    <path d="M60 0V360M120 0V360M180 0V360M240 0V360M300 0V360M360 0V360M420 0V360M480 0V360M540 0V360M600 0V360M660 0V360M720 0V360M780 0V360M0 60H860M0 120H860M0 180H860M0 240H860M0 300H860" stroke="#FFFFFF" stroke-opacity="0.04"/>
+    <circle cx="812" cy="46" r="3" fill="#3ACE93" fill-opacity="0.6"/>
+    <circle cx="770" cy="322" r="2.5" fill="#3ACE93" fill-opacity="0.4"/>
+    <circle cx="446" cy="52" r="2.5" fill="#3ACE93" fill-opacity="0.4"/>
+
+    <!-- left: brand block -->
+    <rect x="56" y="56" width="44" height="44" rx="12" fill="url(#pv)"/>
+    <text x="78" y="85" text-anchor="middle" font-family="Inter,'Segoe UI',system-ui,sans-serif" font-size="19" font-weight="800" fill="#FFFFFF" letter-spacing="-0.5">HP</text>
+    <text x="56" y="160" font-family="Inter,'Segoe UI',system-ui,sans-serif" font-size="42" font-weight="700" fill="#F8FAFC" letter-spacing="-1">Host<tspan fill="#3ACE93">Pay</tspan></text>
+    <text x="56" y="192" font-family="Inter,'Segoe UI',system-ui,sans-serif" font-size="16" fill="#94A3B8">Wallets, transfers, and escrow — with one API.</text>
+
+    <g font-family="Inter,'Segoe UI',system-ui,sans-serif" font-size="12.5" font-weight="600">
+      <rect x="56" y="216" width="112" height="28" rx="14" fill="#00BC7F" fill-opacity="0.12" stroke="#00BC7F" stroke-opacity="0.35"/>
+      <text x="112" y="234" text-anchor="middle" fill="#6EE7B7">Mobile money</text>
+      <rect x="176" y="216" width="64" height="28" rx="14" fill="#00BC7F" fill-opacity="0.12" stroke="#00BC7F" stroke-opacity="0.35"/>
+      <text x="208" y="234" text-anchor="middle" fill="#6EE7B7">Cards</text>
+      <rect x="248" y="216" width="72" height="28" rx="14" fill="#00BC7F" fill-opacity="0.12" stroke="#00BC7F" stroke-opacity="0.35"/>
+      <text x="284" y="234" text-anchor="middle" fill="#6EE7B7">Escrow</text>
+      <rect x="328" y="216" width="92" height="28" rx="14" fill="#00BC7F" fill-opacity="0.12" stroke="#00BC7F" stroke-opacity="0.35"/>
+      <text x="374" y="234" text-anchor="middle" fill="#6EE7B7">Webhooks</text>
+    </g>
+
+    <!-- right: wallet card -->
+    <rect x="530" y="66" width="270" height="150" rx="18" fill="#FFFFFF" fill-opacity="0.06" stroke="#00BC7F" stroke-opacity="0.5"/>
+    <rect x="554" y="90" width="34" height="24" rx="5" fill="url(#pv)"/>
+    <text x="776" y="106" text-anchor="end" font-family="Inter,'Segoe UI',system-ui,sans-serif" font-size="12" font-weight="600" fill="#6EE7B7">HostPay</text>
+    <text x="554" y="152" font-family="Inter,'Segoe UI',system-ui,sans-serif" font-size="10" font-weight="600" letter-spacing="2" fill="#94A3B8">WALLET BALANCE</text>
+    <text x="554" y="182" font-family="'JetBrains Mono',ui-monospace,Menlo,monospace" font-size="24" font-weight="700" fill="#F8FAFC">SLE 4,820.00</text>
+
+    <!-- code window -->
+    <rect x="470" y="230" width="240" height="104" rx="12" fill="#0B1120" stroke="#334155"/>
+    <circle cx="490" cy="250" r="4" fill="#475569"/>
+    <circle cx="504" cy="250" r="4" fill="#475569"/>
+    <circle cx="518" cy="250" r="4" fill="#475569"/>
+    <rect x="488" y="266" width="92" height="8" rx="4" fill="#00945E" fill-opacity="0.85"/>
+    <rect x="488" y="282" width="152" height="8" rx="4" fill="#475569"/>
+    <rect x="488" y="298" width="120" height="8" rx="4" fill="#475569"/>
+    <rect x="488" y="314" width="64" height="8" rx="4" fill="#34D399" fill-opacity="0.7"/>
+
+    <!-- success toast -->
+    <rect x="646" y="252" width="158" height="44" rx="12" fill="#0F172A" stroke="#10B981" stroke-opacity="0.5"/>
+    <circle cx="668" cy="274" r="8" fill="#10B981" fill-opacity="0.2"/>
+    <path d="M664.5 274l2.5 2.5 4.5-5" stroke="#34D399" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="684" y="270" font-family="Inter,'Segoe UI',system-ui,sans-serif" font-size="11.5" font-weight="600" fill="#F8FAFC">Payment received</text>
+    <text x="684" y="285" font-family="Inter,'Segoe UI',system-ui,sans-serif" font-size="10.5" fill="#94A3B8">Orange Money · just now</text>
+  </g>
+</svg>

@@ -1,0 +1,58 @@
+---
+title: "Delete Connect Account"
+api: "POST /api/v1/transactions/wallet/connect/delete"
+description: "Delete the Stripe Connect account associated with a wallet's owner."
+---
+
+Deletes the user's Stripe Connect account and clears it from their record. They will need to complete onboarding again to receive card payouts.
+
+### Query Parameters
+
+<ParamField query="wallet_id" type="string" required>
+  The wallet whose owner's Connect account to delete.
+</ParamField>
+
+### Response
+
+<ResponseExample>
+
+```json 200
+{
+  "message": "Connect account deleted successfully"
+}
+```
+
+```json 400
+{
+  "detail": "User does not have a Stripe Connect account."
+}
+```
+
+</ResponseExample>
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://hpay-api.host-sl.com/api/v1/transactions/wallet/connect/delete?wallet_id=9a8b7c6d-...' \
+  --header 'api-key: YOUR_API_KEY' \
+  --header 'secret-key: YOUR_SECRET_KEY'
+```
+
+```python Python
+from hostpay import HostPay
+
+client = HostPay(api_key="YOUR_API_KEY", secret_key="YOUR_SECRET_KEY")
+
+client.connect.delete("9a8b7c6d-...")
+```
+
+```typescript TypeScript
+import { HostPay } from "@hostpay/sdk";
+
+const client = new HostPay({ apiKey: "YOUR_API_KEY", secretKey: "YOUR_SECRET_KEY" });
+
+await client.connect.delete("9a8b7c6d-...");
+```
+
+</RequestExample>

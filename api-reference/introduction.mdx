@@ -1,0 +1,262 @@
+---
+title: "API Reference"
+description: "Complete reference for the HOST Pay API"
+---
+
+## Base URL
+
+```
+https://hpay-api.host-sl.com/api/v1
+```
+
+## Authentication
+
+All API requests require authentication using API keys. Include these headers in every request:
+
+```bash
+api-key: YOUR_API_KEY
+secret-key: YOUR_SECRET_KEY
+```
+
+Learn more about [Authentication](/authentication).
+
+## API Version
+
+Current version: **0.3.0**
+
+View the [Changelog](/changelog/overview) for version history and updates.
+
+## Request Format
+
+All requests should be sent with `Content-Type: application/json` header when sending request bodies.
+
+## Response Format
+
+All responses are returned in JSON format:
+
+```json
+{
+  "id": "resource_id",
+  "field_name": "value",
+  "created_at": "2025-01-16T10:00:00Z"
+}
+```
+
+### Success Responses
+
+- `200 OK`: Request succeeded
+- `201 Created`: Resource created successfully
+
+### Error Responses
+
+- `400 Bad Request`: Invalid request parameters
+- `401 Unauthorized`: Missing or invalid credentials
+- `403 Forbidden`: Insufficient permissions
+- `404 Not Found`: Resource not found
+- `429 Too Many Requests`: Rate limit exceeded
+- `500 Internal Server Error`: Server error
+
+## Error Format
+
+```json
+{
+  "detail": "Error message describing what went wrong"
+}
+```
+
+## Rate Limiting
+
+API requests are rate limited to prevent abuse using Redis-backed storage:
+
+- **Default**: 10 requests per minute
+- **Card Deposits**: 5 requests per minute
+- **Mobile Money Deposits**: 10 requests per minute
+- **Transfers**: 10 requests per minute
+- **Card Payouts**: 5 requests per minute
+- **Mobile Money Cashouts**: 2 requests per minute
+- **Admin Endpoints**: 5 requests per minute
+
+When rate limited, you'll receive a `429 Too Many Requests` response with retry information.
+
+## Pagination
+
+List endpoints support pagination using query parameters:
+
+```
+GET /api/v1/users/?page=1&per_page=20
+```
+
+Parameters:
+
+- `page`: Page number (default: 1)
+- `per_page`: Items per page (default: 20, max: 100)
+
+Response includes pagination metadata:
+
+```json
+{
+  "data": [...],
+  "page": 1,
+  "per_page": 20,
+  "total": 156,
+  "total_pages": 8
+}
+```
+
+## Filtering
+
+Many list endpoints support filtering:
+
+```
+GET /api/v1/users/?is_active=true
+GET /api/v1/wallets/?is_active=false
+GET /api/v1/transactions/?status=completed
+```
+
+## Timestamps
+
+All timestamps are returned in ISO 8601 format with UTC timezone:
+
+```
+2025-01-16T10:30:00Z
+```
+
+## UUIDs
+
+Resources are identified by UUID v4:
+
+```
+user_abc123xyz789
+wallet_def456uvw012
+txn_ghi789rst345
+```
+
+## Idempotency
+
+Some endpoints support idempotency to safely retry requests. Include an `Idempotency-Key` header:
+
+```bash
+Idempotency-Key: unique_key_12345
+```
+
+## Webhooks
+
+HOST Pay sends webhook events for important actions. Learn more in the [Webhooks](/webhooks/overview) section.
+
+## API Resources
+
+<CardGroup cols={3}>
+  <Card title="Users" icon="users" href="/api-reference/users/create">
+    Create and manage end users
+  </Card>
+  <Card title="Wallets" icon="wallet" href="/api-reference/wallets/create">
+    Handle user wallets and balances
+  </Card>
+  <Card
+    title="Transactions"
+    icon="money-bill-transfer"
+    href="/api-reference/transactions/list"
+  >
+    Process payments and transfers
+  </Card>
+</CardGroup>
+
+## Code Examples
+
+We provide code examples in multiple languages:
+
+<CodeGroup>
+
+```python Python
+import requests
+
+headers = {
+    "api-key": "YOUR_API_KEY",
+    "secret-key": "YOUR_SECRET_KEY",
+    "Content-Type": "application/json"
+}
+
+response = requests.get(
+    "https://hpay-api.host-sl.com/api/v1/users/",
+    headers=headers
+)
+```
+
+```javascript JavaScript
+const headers = {
+  "api-key": "YOUR_API_KEY",
+  "secret-key": "YOUR_SECRET_KEY",
+  "Content-Type": "application/json",
+};
+
+fetch("https://hpay-api.host-sl.com/api/v1/users/", {
+  method: "GET",
+  headers: headers,
+})
+  .then((response) => response.json())
+  .then((data) => console.log(data));
+```
+
+```php PHP
+<?php
+$headers = [
+    "api-key: YOUR_API_KEY",
+    "secret-key: YOUR_SECRET_KEY",
+    "Content-Type: application/json"
+];
+
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, "https://hpay-api.host-sl.com/api/v1/users/");
+curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+$response = curl_exec($ch);
+curl_close($ch);
+?>
+```
+
+```ruby Ruby
+require 'net/http'
+require 'json'
+
+uri = URI('https://hpay-api.host-sl.com/api/v1/users/')
+headers = {
+  'api-key' => 'YOUR_API_KEY',
+  'secret-key' => 'YOUR_SECRET_KEY',
+  'Content-Type' => 'application/json'
+}
+
+response = Net::HTTP.get_response(uri, headers)
+data = JSON.parse(response.body)
+```
+
+</CodeGroup>
+
+## Testing
+
+Use Test Mode credentials to test without processing real transactions:
+
+```python
+test_headers = {
+    "api-key": "test_ak_1234567890abcdef",
+    "secret-key": "test_sk_abcdef1234567890"
+}
+```
+
+Learn more about [Test vs Live Environments](/environments).
+
+## Support
+
+Need help with the API?
+
+<CardGroup cols={3}>
+  <Card title="Documentation" icon="book" href="/introduction">
+    Read our guides
+  </Card>
+  <Card title="Email Support" icon="envelope" href="mailto:support@hostpay.com">
+    Contact our team
+  </Card>
+  <Card title="Discord" icon="discord" href="https://discord.gg/hostpay">
+    Join our community
+  </Card>
+</CardGroup>

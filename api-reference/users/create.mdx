@@ -1,0 +1,219 @@
+---
+title: "Create User"
+api: "POST /api/v1/users/create/"
+description: "Create a new application user"
+---
+
+## Endpoint
+
+```
+POST /api/v1/users/create/
+```
+
+## Headers
+
+<ParamField header="api-key" type="string" required>
+  Your application API key
+</ParamField>
+
+<ParamField header="secret-key" type="string" required>
+  Your application secret key
+</ParamField>
+
+<ParamField header="Content-Type" type="string" default="application/json">
+  Content type of the request body
+</ParamField>
+
+## Body Parameters
+
+<ParamField body="app_user_id" type="string" required>
+  Your own identifier for this user in your system. Use it to reconcile HOST Pay
+  users with your database. Accepts any string identifier (e.g. `user_123`, a
+  UUID, or a plain number). For backward compatibility a numeric value is also
+  accepted and stored as its string form (`1001` becomes `"1001"`). It cannot be
+  changed after the user is created.
+</ParamField>
+
+<ParamField body="name" type="string" required>
+  Full name of the user
+</ParamField>
+
+<ParamField body="phone_number" type="string" required>
+  Phone number with country code (e.g., +23279123456)
+</ParamField>
+
+<ParamField body="email" type="string">
+  Email address of the user (optional)
+</ParamField>
+
+<ParamField body="username" type="string">
+  Optional username for the user
+</ParamField>
+
+<ParamField body="is_active" type="boolean" default="true">
+  Whether the user is active on creation
+</ParamField>
+
+## Response
+
+<ResponseField name="id" type="string">
+  HOST Pay's unique identifier for the user (UUID)
+</ResponseField>
+
+<ResponseField name="app_user_id" type="string">
+  The identifier you supplied when creating the user. Always returned as a string.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  User's full name
+</ResponseField>
+
+<ResponseField name="email" type="string">
+  User's email address
+</ResponseField>
+
+<ResponseField name="phone_number" type="string">
+  User's phone number
+</ResponseField>
+
+<ResponseField name="is_active" type="boolean">
+  Whether the user account is active (default: true)
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  ISO 8601 timestamp of creation
+</ResponseField>
+
+<ResponseField name="updated_at" type="string">
+  ISO 8601 timestamp of last update
+</ResponseField>
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://hpay-api.host-sl.com/api/v1/users/create/ \
+  --header 'api-key: YOUR_API_KEY' \
+  --header 'secret-key: YOUR_SECRET_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "app_user_id": "user_1001",
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "phone_number": "+23279123456"
+  }'
+```
+
+```python Python
+from hostpay import HostPay
+
+client = HostPay(api_key="YOUR_API_KEY", secret_key="YOUR_SECRET_KEY")
+
+user = client.users.create(
+    app_user_id="user_1001",
+    name="John Doe",
+    email="john.doe@example.com",
+    phone_number="+23279123456",
+)
+print(user["id"])
+```
+
+```typescript TypeScript
+import { HostPay } from "@hostpay/sdk";
+
+const client = new HostPay({ apiKey: "YOUR_API_KEY", secretKey: "YOUR_SECRET_KEY" });
+
+const user = await client.users.create({
+  appUserId: "user_1001",
+  name: "John Doe",
+  email: "john.doe@example.com",
+  phoneNumber: "+23279123456",
+});
+console.log(user.id);
+```
+
+```php PHP
+<?php
+$curl = curl_init();
+
+curl_setopt_array($curl, [
+  CURLOPT_URL => "https://hpay-api.host-sl.com/api/v1/users/create/",
+  CURLOPT_RETURNTRANSFER => true,
+  CURLOPT_POST => true,
+  CURLOPT_HTTPHEADER => [
+    "api-key: YOUR_API_KEY",
+    "secret-key: YOUR_SECRET_KEY",
+    "Content-Type: application/json"
+  ],
+  CURLOPT_POSTFIELDS => json_encode([
+    "app_user_id" => "user_1001",
+    "name" => "John Doe",
+    "email" => "john.doe@example.com",
+    "phone_number" => "+23279123456"
+  ])
+]);
+
+$response = curl_exec($curl);
+curl_close($curl);
+
+echo $response;
+?>
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 - Success
+{
+  "id": "9b2c1f0e-8a3d-4c7b-9e1a-2f5d6c8b0a11",
+  "app_user_id": "user_1001",
+  "name": "John Doe",
+  "email": "john.doe@example.com",
+  "phone_number": "+23279123456",
+  "is_active": true,
+  "created_at": "2025-01-16T10:30:00Z",
+  "updated_at": "2025-01-16T10:30:00Z"
+}
+```
+
+```json 400 - Bad Request
+{
+  "detail": "Email already exists"
+}
+```
+
+```json 401 - Unauthorized
+{
+  "detail": "Invalid application credentials"
+}
+```
+
+</ResponseExample>
+
+## Notes
+
+<Info>
+  After creating a user, you need to create a wallet for them using the [Create
+  Wallet endpoint](/api-reference/wallets/create). You can then retrieve it
+  using the [Get Wallet endpoint](/api-reference/wallets/get).
+</Info>
+
+<Warning>
+  Email addresses must be unique within your application's schema. Attempting to
+  create a user with an existing email will result in a 400 error.
+</Warning>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Create User Wallet" href="/api-reference/wallets/create">
+    Create a wallet for the new user
+  </Card>
+  <Card
+    title="Make a Deposit"
+    href="/api-reference/transactions/mobile-money-deposit"
+  >
+    Add funds to the user's wallet
+  </Card>
+</CardGroup>

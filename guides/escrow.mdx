@@ -1,0 +1,108 @@
+---
+title: "Escrow Service"
+description: "Securely hold funds and release them based on custom conditions"
+---
+
+## Overview
+
+HOST Pay's **Escrow Service** allows applications to hold funds securely in a temporary state. This is ideal for marketplaces, service platforms, or any transaction where trust needs to be established before funds are finalized.
+
+## How It Works
+
+The escrow flow consists of three main actions: **Hold**, **Release**, and **Refund**.
+
+<Steps>
+  <Step title="Hold Funds">
+    Funds are moved from the sender's wallet into the application's secure escrow wallet.
+  </Step>
+  <Step title="Release Funds">
+    Once conditions are met, funds are moved from the escrow wallet to the recipient.
+  </Step>
+  <Step title="Refund Funds">
+    If the transaction is cancelled, funds are returned from escrow to the original sender.
+  </Step>
+</Steps>
+
+---
+
+## Configuration
+
+### Enabling Escrow
+Escrow must be enabled in your application's settings within the Dashboard or via the API. If disabled, calls to escrow endpoints will return a `403 Forbidden` error.
+
+### Escrow Fees
+You can configure an **Escrow Release Fee**. This fee is a percentage deducted from the total amount *at the time of release* to the recipient.
+
+---
+
+## 1. Holding Funds
+
+To initiate an escrow hold, use the [Hold Funds](/api-reference/escrow/hold) endpoint.
+
+- **Sender**: The user wallet from which funds will be deducted.
+- **Amount**: The total amount to be held in escrow, specified in your application's **base currency** (e.g., USD or SLE).
+- **Status**: The transaction will move to a `HELD` state.
+
+```javascript JavaScript
+const holdResponse = await fetch('/api/v1/escrow/hold', {
+  method: 'POST',
+  headers: {
+    'api-key': 'YOUR_API_KEY',
+    'secret-key': 'YOUR_SECRET_KEY',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    wallet_id: 'wall_sender_123',
+    amount: 100.00,
+    description: "Escrow for Order #456"
+  })
+});
+```
+
+---
+
+## 2. Releasing Funds
+
+When your application confirms that the transaction conditions have been met (e.g., product delivered), use the [Release Funds](/api-reference/escrow/release) endpoint.
+
+- **Transaction ID**: The ID of the original `HELD` transaction.
+- **Recipient**: The wallet that will receive the funds.
+- **Partial Release**: You can release a portion of the funds or the full amount.
+
+```javascript JavaScript
+const releaseResponse = await fetch('/api/v1/escrow/trans_789/release', {
+  method: 'POST',
+  body: JSON.stringify({
+    recipient_wallet_id: 'wall_recipient_999',
+    amount: 100.00
+  })
+});
+```
+
+---
+
+## 3. Refunding Funds
+
+If the transaction cannot be completed, you can return the funds to the sender using the [Refund Funds](/api-reference/escrow/refund) endpoint.
+
+- **No Fees**: Typically, escrow refunds do not incur the escrow release fee.
+- **Status**: The original transaction status updates to `REFUNDED`.
+
+---
+
+## Best Practices
+
+- **Timeout Management**: Implement logic to automatically refund or flag escrow holds that have been "pending" for too long.
+- **Partial Releases**: Use partial releases for milestone-based payments in long-running projects.
+- **Webhooks**: Listen for `escrow.held`, `escrow.released`, and `escrow.refunded` events to keep your local database in sync with escrow state changes.
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Wallet Management" icon="wallet" href="/guides/wallets">
+    Manage user balances
+  </Card>
+  <Card title="Webhooks" icon="webhook" href="/webhooks/overview">
+    Automate your escrow logic
+  </Card>
+</CardGroup>

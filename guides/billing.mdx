@@ -1,0 +1,72 @@
+---
+title: "Prepaid Billing & Overdraft"
+description: "Understand the prepaid fee billing model and overdraft limit enforcement for client-managed applications"
+---
+
+## Overview
+
+HOST Pay supports two key management models: **Platform-Managed** and **Client-Managed**. 
+
+* **Platform-Managed**: HOST Pay manages the API credentials and payment integrations. Platform fees are automatically sliced out from customer transactions during checkout. No prepaid billing is required.
+* **Client-Managed (BYOK)**: You bring your own API keys for Stripe and Monime. Because 100% of customer funds are processed directly into your own merchant accounts, HOST Pay cannot automatically collect its platform fee. Instead, you maintain a **Prepaid Balance** from which HOST Pay deducts platform fees.
+
+---
+
+## How Prepaid Billing Works
+
+For Client-Managed applications, platform fees are collected automatically using a prepaid balance:
+
+1. **Prepaid Wallet**: Upon switching to client-managed keys, a secure `platform_prepaid` wallet is created for your application in both Test and Live environments.
+2. **Platform Fee Deductions**: Every write transaction (deposit, payout, transfer, etc.) computes the HOST Pay platform fee. This fee is instantly deducted from your application's prepaid balance.
+3. **Running a Negative Balance**: Your prepaid balance can fall below zero (going negative) to allow smooth, uninterrupted operations.
+
+---
+
+## Overdraft Limit Enforcement
+
+To prevent excessive unpaid balances, HOST Pay enforces an **Overdraft Limit** on the prepaid balance.
+
+* **Default Limit**: By default, the overdraft limit is set to **`-50.00`** in your application's base currency (e.g. `-50.00 USD` or `-500.00 SLE`).
+* **Hard Block**: If your prepaid balance falls below this overdraft limit, any further transaction write operations are immediately intercepted and blocked.
+* **API Error**: Blocked transactions return a `403 Forbidden` response:
+  ```json
+  {
+    "detail": "Application prepaid balance limit exceeded. Please top up your prepaid balance."
+  }
+  ```
+* **Impacted Endpoints**: When in overdraft, developers cannot execute:
+  * User Deposits (Cards or Mobile Money)
+  * User Payouts / Cashouts
+  * Internal Transfers
+  * Guest Checkouts / Refunds
+
+---
+
+## Funding Your Prepaid Balance
+
+You can top up your prepaid balance via Mobile Money (Monime) directly from the HOST Pay Dashboard under the **Billing** tab:
+
+<Steps>
+  <Step title="Enter Monime Phone & Amount">
+    In the Dashboard billing tab, enter your Mobile Money phone number and the top-up amount in **Sierra Leone Leones (SLE)**.
+  </Step>
+  <Step title="Execute USSD Prompt">
+    An interactive USSD payment code is generated. Dial the shortcode on your phone (or authorize via push notification) to complete the SLE transfer.
+  </Step>
+  <Step title="Automatic Conversion & Credit">
+    Once the webhook registers the completed payment, the SLE funds are converted to your application's base currency (e.g., converted to USD using live exchange rates if your base currency is USD) and credited to your prepaid balance.
+  </Step>
+</Steps>
+
+---
+
+## Related Guides
+
+<CardGroup cols={2}>
+  <Card title="Fee Configuration" icon="calculator" href="/api-reference/introduction">
+    Configure transaction fees
+  </Card>
+  <Card title="Deposits Guide" icon="arrow-down-to-bracket" href="/guides/deposits">
+    Implementing user deposits
+  </Card>
+</CardGroup>

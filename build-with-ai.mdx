@@ -1,0 +1,86 @@
+---
+title: "Build with AI"
+description: "Integrate HOST Pay using AI coding assistants like Claude, Cursor, and Copilot"
+keywords: ["ai", "llm", "claude", "cursor", "copilot", "openapi", "agent"]
+---
+
+AI coding assistants integrate HOST Pay best when you ground them in the real
+API contract instead of letting them guess. Everything on this page is a
+machine-readable artifact you can hand to an agent.
+
+## Give your AI the API contract
+
+The OpenAPI 3.1 specification is the single source of truth — every endpoint,
+schema, auth requirement, and status code:
+
+| Artifact | URL |
+| --- | --- |
+| OpenAPI spec (live) | `https://hpay-api.host-sl.com/openapi.json` |
+| OpenAPI spec (GitHub) | `https://raw.githubusercontent.com/HOST-SL/hostpay-sdk/main/openapi.json` |
+| Interactive Swagger UI | [hpay-api.host-sl.com/docs](https://hpay-api.host-sl.com/docs) |
+| SDK source (Python + TypeScript) | [github.com/HOST-SL/hostpay-sdk](https://github.com/HOST-SL/hostpay-sdk) |
+
+In Claude Code, Cursor, or any agent with web access, this is usually enough:
+
+```text
+Fetch https://raw.githubusercontent.com/HOST-SL/hostpay-sdk/main/openapi.json
+and use it as the authoritative HOST Pay API reference. Don't invent fields or
+endpoints that aren't in the spec.
+```
+
+## Prefer the SDKs over raw HTTP
+
+Ask the AI to use the official SDKs ([`hostpay`](https://pypi.org/project/hostpay/)
+on PyPI, [`@hostpay/sdk`](https://www.npmjs.com/package/@hostpay/sdk) on npm)
+rather than hand-rolled requests. Both are typed, so AI-written code that
+misuses the API **fails your typecheck instead of failing in production** —
+the tightest feedback loop an agent can get.
+
+## Starter prompt
+
+Paste this at the top of your session, filling in your keys:
+
+```text
+You are integrating HOST Pay, a wallet/payments API for Sierra Leone
+(mobile money via Monime, cards via Stripe).
+
+Facts you must respect:
+- Use the official SDK: `pip install hostpay` (Python) or
+  `npm install @hostpay/sdk` (TypeScript). Server-side only — the client
+  carries a secret key.
+- Auth: construct the client once with api_key + secret_key. Test Mode keys
+  (test_...) hit an isolated schema with mock providers; the same code works
+  with Live keys.
+- The authoritative API contract is
+  https://raw.githubusercontent.com/HOST-SL/hostpay-sdk/main/openapi.json —
+  never invent endpoints or fields.
+- Flow: create user -> create wallet -> deposit (mobile money or card) ->
+  transfer / payout / escrow.
+- Test Mode magic phone numbers: +23299000001 (deposits complete),
+  +23299000002 (fail), +23299000009 (stay pending). Use +23299000001 for
+  happy-path tests.
+- Money-moving calls accept an idempotency key — set one on anything retried.
+- Webhooks: verify signatures with client.webhooks.construct_event /
+  constructEvent, passing the RAW request body.
+
+My Test Mode keys are in the environment as HOSTPAY_API_KEY and
+HOSTPAY_SECRET_KEY. Build: [describe what you want]
+```
+
+## Verify what the AI built
+
+Don't trust — run. Test Mode makes agent-written code cheap to prove:
+
+1. Run it against Test Mode keys; the magic numbers make outcomes
+   deterministic (see the [Testing guide](/guides/testing)).
+2. The SDK repo ships a runnable end-to-end check
+   ([`examples/smoke_sdk.py`](https://github.com/HOST-SL/hostpay-sdk/blob/main/examples/smoke_sdk.py))
+   you can point at your integration environment.
+3. Typecheck: `mypy`/Pyright for Python, `tsc` for TypeScript — the SDKs' types
+   catch hallucinated fields.
+
+## Grounding the docs themselves
+
+Every page on this site is written in plain MDX; if your assistant supports
+web fetching, point it at the specific guide you're implementing (e.g.
+`/guides/deposits`, `/webhooks/security`) alongside the OpenAPI spec.

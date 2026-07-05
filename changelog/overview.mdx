@@ -1,0 +1,94 @@
+---
+title: "Changelog"
+description: "Track all changes and updates to the HOST Pay API"
+---
+
+## Latest Updates
+
+Stay informed about new features, improvements, and bug fixes in the HOST Pay API.
+Versions and dates follow the platform's internal release track.
+
+---
+
+## [0.10.0] - 2026-06-30
+
+### Added
+
+- **Escrow webhook events**: `escrow.held`, `escrow.released`, and `escrow.refunded` are now emitted through the webhook subscription pipeline, so you can react to escrow state changes.
+- **Editable webhook subscriptions**: Update a subscription's events and active status from the dashboard in place, without deleting and recreating it (which previously rotated the signing secret).
+
+### Changed
+
+- **String `app_user_id`**: `app_user_id` now accepts arbitrary external identifiers (e.g. `user_123`, UUIDs), not just integers. Existing numeric values keep working.
+
+### Documentation
+
+- Split the Webhooks guide into dedicated **Events**, **Security**, and **Testing** pages.
+
+---
+
+## [0.9.0] - 2026-06-02
+
+### Added
+
+- **Application base currency**: Choose and change your application's base currency (`USD` or `SLE`) during registration and updates.
+- **Multi-currency formatting**: Amounts across the dashboard now use thousands separators and the correct currency symbol for your base currency.
+
+---
+
+## [0.8.0] - 2026-04-24
+
+### Added
+
+- **Dashboard Analytics API**: New `GET /api/v1/analytics/dashboard` aggregating volume, net revenue, active users, wallet counts, a 14-day volume chart, and recent activity.
+- **Expanded transaction analytics**: `GET /api/v1/transactions/admin/analytics` now returns success rate, average amount, and volume breakdowns by type and currency.
+
+---
+
+## [0.7.0] - 2026-01-28
+
+### Added
+
+- **Full multi-currency support**: Applications can operate natively in `SLE` or another base currency; transactions, fees, and balances reflect it, with automatic `SLE`↔`USD` conversion only when a provider requires it.
+- **Currency-aware notifications**: SMS and event payloads adapt to your base currency.
+
+### Fixed
+
+- Corrected Monime amount unit and fee-percentage handling that could mis-credit wallets.
+
+---
+
+## [0.6.0] - 2026-01-16
+
+### Added
+
+- **Stripe identity verification sync**: Endpoint to re-sync Stripe Connect verification requirements and status.
+- **Monime webhook self-healing**: Automatic transaction recovery from webhook metadata after failed requests.
+
+### Fixed
+
+- Atomic transfers and database connection stability improvements.
+
+---
+
+## [0.5.0] - 2026-01-12
+
+### Added
+
+- **Security hardening**: SHA-256 hashed API keys and secrets, SSRF protection on outbound webhooks, PII/secret log redaction, admin brute-force lockout with per-IP rate limiting, and lock-first idempotency to prevent double-processing under concurrency.
+
+---
+
+## [0.4.0] - 2025-12-20
+
+### Added
+
+- **Escrow**: Dedicated escrow wallet plus a fund-management API — `POST /api/v1/escrow/hold`, `POST /api/v1/escrow/{id}/release`, and `POST /api/v1/escrow/{id}/refund`.
+
+---
+
+## Earlier releases (0.1.0 – 0.3.x, 2025)
+
+Initial platform: application onboarding and API credentials, user wallets,
+card deposits (Stripe) and mobile-money deposits (Monime), wallet-to-wallet
+transfers, payouts, background reconciliation, and outbound webhooks.

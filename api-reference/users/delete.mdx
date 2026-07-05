@@ -1,0 +1,84 @@
+---
+title: "Delete User"
+api: "DELETE /api/v1/users/{user_id}/"
+description: "Permanently delete a user from your application"
+---
+
+## Endpoint
+
+```
+DELETE /api/v1/users/{user_id}/
+```
+
+## Path Parameters
+
+<ParamField path="user_id" type="string" required>
+  The unique identifier of the user to delete
+</ParamField>
+
+## Headers
+
+<ParamField header="api-key" type="string" required>
+  Your application API key
+</ParamField>
+
+<ParamField header="secret-key" type="string" required>
+  Your application secret key
+</ParamField>
+
+## Response
+
+<ResponseField name="message" type="string">
+  Success message confirming the deletion
+</ResponseField>
+
+<RequestExample>
+
+```bash cURL
+curl --request DELETE \
+  --url https://hpay-api.host-sl.com/api/v1/users/user_abc123/ \
+  --header 'api-key: YOUR_API_KEY' \
+  --header 'secret-key: YOUR_SECRET_KEY'
+```
+
+```python Python
+from hostpay import HostPay
+
+client = HostPay(api_key="YOUR_API_KEY", secret_key="YOUR_SECRET_KEY")
+
+result = client.users.delete("user_abc123")
+print(result["message"])
+```
+
+```typescript TypeScript
+import { HostPay } from "@hostpay/sdk";
+
+const client = new HostPay({ apiKey: "YOUR_API_KEY", secretKey: "YOUR_SECRET_KEY" });
+
+const result = await client.users.delete("user_abc123");
+console.log(result.message);
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 - Success
+{
+  "message": "User deleted successfully"
+}
+```
+
+```json 404 - Not Found
+{
+  "detail": "User not found"
+}
+```
+
+</ResponseExample>
+
+<Warning>
+  Deletion is permanent and cannot be undone. All user data and associated history
+  will be purged. If you only want to temporarily prevent user access, consider
+  using the [Disable User endpoint](/api-reference/users/disable) instead.
+</Warning>

@@ -1,0 +1,74 @@
+---
+title: "Managing Wallets"
+description: "Creating and controlling user wallets and application balances"
+---
+
+## Overview
+
+In HOST Pay, a **Wallet** is the fundamental unit for holding and moving funds. Every user must have at least one wallet to participate in transactions.
+
+## Wallet Attributes
+
+Each wallet contains the following key information:
+
+- **ID**: A unique `wall_...` identifier.
+- **User ID**: The ID of the user who owns the wallet.
+- **Balance**: The current available funds.
+- **Currency**: The base currency of the wallet, inherited from the application's configuration (e.g., USD or SLE).
+- **Status**: Whether the wallet is `active` or `disabled`.
+
+---
+
+## Creating Wallets
+
+Wallets are typically created immediately after a user is registered. Use the [Create Wallet](/api-reference/wallets/create) endpoint to initialize a new wallet for a user.
+
+```javascript JavaScript
+const response = await fetch('/api/v1/wallets/create/user_123/', {
+  method: 'POST',
+  headers: {
+    'api-key': 'YOUR_API_KEY',
+    'secret-key': 'YOUR_SECRET_KEY'
+  }
+});
+```
+
+> [!TIP]
+> Each user can have only one wallet per application by default.
+
+---
+
+## Wallet Status & Controls
+
+You can programmatically control the status of a wallet to manage risk or respond to user requests.
+
+### Disabling a Wallet
+If you suspect fraudulent activity or if a user requests to lock their account, you can use the [Disable Wallet](/api-reference/wallets/disable) endpoint.
+
+- **Effect**: No funds can be deposited, withdrawn, or transferred to/from a disabled wallet.
+- **Persistence**: The balance remains intact but is inaccessible.
+
+### Re-enabling a Wallet
+Use the [Enable Wallet](/api-reference/wallets/enable) endpoint to restore full functionality to a previously disabled wallet.
+
+---
+
+### Tracking Balances
+
+To display the current balance to a user, use the [Get Wallet Balance](/api-reference/wallets/balance) endpoint. This returns the real-time balance in the application's configured **base currency**.
+
+You can also subscribe to the `wallet.balance.updated` webhook event to receive real-time notifications whenever a wallet's balance changes, without needing to poll the API.
+
+### Real-time Architecture
+HOST Pay is designed for high-concurrency. When a transaction occurs, the system uses row-level locking to ensure that balance updates are atomic and consistent across all services.
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Fee Structures" icon="percent" href="/api-reference/introduction">
+    Manage transaction fees
+  </Card>
+  <Card title="User Management" icon="users" href="/guides/users">
+    Overview of user roles and attributes
+  </Card>
+</CardGroup>

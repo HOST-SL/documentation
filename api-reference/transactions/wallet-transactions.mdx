@@ -1,0 +1,115 @@
+---
+title: "Get Wallet Transactions"
+api: "GET /api/v1/transactions/wallet/{wallet_id}"
+description: "Retrieve all transactions for a specific wallet."
+---
+
+This endpoint returns all transactions where the specified wallet is either the sender or the recipient.
+
+### Path Parameters
+
+<ParamField path="wallet_id" type="string" required>
+  The unique identifier of the wallet to fetch transactions for.
+</ParamField>
+
+### Response
+
+The response is an array of transaction objects.
+
+<ResponseField name="id" type="string">
+  The unique identifier for the transaction.
+</ResponseField>
+
+<ResponseField name="amount" type="number">
+  The transaction amount.
+</ResponseField>
+
+<ResponseField name="currency" type="string">
+  The currency code.
+</ResponseField>
+
+<ResponseField name="transaction_type" type="string">
+  The type of transaction.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  The current status.
+</ResponseField>
+
+<ResponseExample>
+
+```json 200
+[
+  {
+    "id": "trans_111...",
+    "wallet_id": "wall_789...",
+    "recipient_wallet_id": "wall_000...",
+    "amount": 20.0,
+    "currency": "USD",
+    "transaction_type": "transfer",
+    "status": "completed",
+    "created_at": "2025-01-16T12:00:00Z"
+  },
+  {
+    "id": "trans_222...",
+    "wallet_id": "wall_000...",
+    "recipient_wallet_id": "wall_789...",
+    "amount": 15.0,
+    "currency": "USD",
+    "transaction_type": "transfer",
+    "status": "completed",
+    "created_at": "2025-01-16T13:00:00Z"
+  }
+]
+```
+
+</ResponseExample>
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url https://hpay-api.host-sl.com/api/v1/transactions/wallet/YOUR_WALLET_ID \
+  --header 'api-key: YOUR_API_KEY' \
+  --header 'secret-key: YOUR_SECRET_KEY'
+```
+
+```python Python
+from hostpay import HostPay
+
+client = HostPay(api_key="YOUR_API_KEY", secret_key="YOUR_SECRET_KEY")
+
+txns = client.transactions.for_wallet("YOUR_WALLET_ID")
+for txn in txns:
+    print(txn["id"], txn["status"])
+```
+
+```typescript TypeScript
+import { HostPay } from "@hostpay/sdk";
+
+const client = new HostPay({ apiKey: "YOUR_API_KEY", secretKey: "YOUR_SECRET_KEY" });
+
+const txns = await client.transactions.forWallet("YOUR_WALLET_ID");
+for (const txn of txns) console.log(txn.id, txn.status);
+```
+
+```php PHP
+<?php
+
+$curl = curl_init();
+
+curl_setopt_array($curl, [
+  CURLOPT_URL => "https://hpay-api.host-sl.com/api/v1/transactions/wallet/YOUR_WALLET_ID",
+  CURLOPT_RETURNTRANSFER => true,
+  CURLOPT_HTTPHEADER => [
+    "api-key: YOUR_API_KEY",
+    "secret-key: YOUR_SECRET_KEY"
+  ],
+]);
+
+$response = curl_exec($curl);
+curl_close($curl);
+echo $response;
+```
+
+</RequestExample>

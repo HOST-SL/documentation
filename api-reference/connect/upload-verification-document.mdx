@@ -1,0 +1,112 @@
+---
+title: "Upload Verification Document"
+api: "POST /api/v1/transactions/wallet/{wallet_id}/connect/verification-document"
+description: "Upload an identity document for a user's Stripe Connect verification."
+---
+
+Uploads the front or back of an identity document (multipart form) and attaches it to the wallet owner's Connect account. Call this when [onboarding](/api-reference/connect/complete-onboarding) reports `individual.verification.document` in `currently_due`.
+
+Accepted types: JPEG, PNG, PDF. Maximum size: 10 MB.
+
+### Path Parameters
+
+<ParamField path="wallet_id" type="string" required>
+  The wallet whose owner's document is being uploaded.
+</ParamField>
+
+### Form Data
+
+<ParamField body="document_side" type="string" required>
+  `front` or `back`.
+</ParamField>
+
+<ParamField body="file" type="file" required>
+  The document file (JPEG, PNG, or PDF, ≤ 10 MB).
+</ParamField>
+
+### Response
+
+<ResponseField name="account_id" type="string">
+  The Stripe Connect account ID.
+</ResponseField>
+
+<ResponseField name="payouts_enabled" type="boolean">
+  Whether payouts are now enabled.
+</ResponseField>
+
+<ResponseField name="pending_verification" type="string[]">
+  Items Stripe is reviewing (usually includes the just-uploaded document).
+</ResponseField>
+
+<ResponseExample>
+
+```json 200
+{
+  "message": "Document (front) uploaded successfully for account acct_1ABC... associated with wallet 9a8b7c6d-....",
+  "account_id": "acct_1ABC...",
+  "file_id_used": "file_1XYZ...",
+  "payouts_enabled": false,
+  "currently_due": [],
+  "pending_verification": ["individual.verification.document"],
+  "disabled_reason": null
+}
+```
+
+```json 400
+{
+  "detail": "Invalid file type. Allowed types: image/jpeg, image/png, application/pdf"
+}
+```
+
+```json 413
+{
+  "detail": "File size exceeds limit (10 MB)."
+}
+```
+
+</ResponseExample>
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://hpay-api.host-sl.com/api/v1/transactions/wallet/9a8b7c6d-.../connect/verification-document \
+  --header 'api-key: YOUR_API_KEY' \
+  --header 'secret-key: YOUR_SECRET_KEY' \
+  --form 'document_side=front' \
+  --form 'file=@passport.jpg;type=image/jpeg'
+```
+
+```python Python
+from hostpay import HostPay
+
+client = HostPay(api_key="YOUR_API_KEY", secret_key="YOUR_SECRET_KEY")
+
+with open("passport.jpg", "rb") as f:
+    result = client.connect.upload_verification_document(
+        wallet_id="9a8b7c6d-...",
+        document=f,
+        document_side="front",
+        filename="passport.jpg",
+        mime_type="image/jpeg",
+    )
+print(result["pending_verification"])
+```
+
+```typescript TypeScript
+import { readFile } from "node:fs/promises";
+import { HostPay } from "@hostpay/sdk";
+
+const client = new HostPay({ apiKey: "YOUR_API_KEY", secretKey: "YOUR_SECRET_KEY" });
+
+const result = await client.connect.uploadVerificationDocument({
+  walletId: "9a8b7c6d-...",
+  document: await readFile("passport.jpg"),
+  documentSide: "front",
+  filename: "passport.jpg",
+  mimeType: "image/jpeg",
+});
+console.log(result.pending_verification);
+```
+
+</RequestExample>

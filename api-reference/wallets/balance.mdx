@@ -1,0 +1,114 @@
+---
+title: "Get Wallet Balance"
+api: "GET /api/v1/wallets/{wallet_id}/balance"
+description: "Retrieve the current balance of a specific wallet"
+---
+
+## Endpoint
+
+```
+GET /api/v1/wallets/{wallet_id}/balance
+```
+
+## Path Parameters
+
+<ParamField path="wallet_id" type="string" required>
+  The unique identifier of the wallet to get the balance for.
+</ParamField>
+
+## Headers
+
+<ParamField header="api-key" type="string" required>
+  Your application API key
+</ParamField>
+
+<ParamField header="secret-key" type="string" required>
+  Your application secret key
+</ParamField>
+
+## Response
+
+<ResponseField name="wallet_id" type="string">
+  The unique identifier of the wallet.
+</ResponseField>
+
+<ResponseField name="balance" type="number">
+  The current balance of the wallet.
+</ResponseField>
+
+<ResponseField name="currency" type="string">
+  The currency of the wallet balance.
+</ResponseField>
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url https://hpay-api.host-sl.com/api/v1/wallets/wall_123/balance \
+  --header 'api-key: YOUR_API_KEY' \
+  --header 'secret-key: YOUR_SECRET_KEY'
+```
+
+```python Python
+from hostpay import HostPay
+
+client = HostPay(api_key="YOUR_API_KEY", secret_key="YOUR_SECRET_KEY")
+
+balance = client.wallets.balance("wall_123")
+print(balance["balance"], balance["currency"])
+```
+
+```typescript TypeScript
+import { HostPay } from "@hostpay/sdk";
+
+const client = new HostPay({ apiKey: "YOUR_API_KEY", secretKey: "YOUR_SECRET_KEY" });
+
+const balance = await client.wallets.balance("wall_123");
+console.log(balance.balance, balance.currency);
+```
+
+```php PHP
+<?php
+$curl = curl_init();
+
+curl_setopt_array($curl, [
+  CURLOPT_URL => "https://hpay-api.host-sl.com/api/v1/wallets/wall_123/balance",
+  CURLOPT_RETURNTRANSFER => true,
+  CURLOPT_HTTPHEADER => [
+    "api-key: YOUR_API_KEY",
+    "secret-key: YOUR_SECRET_KEY"
+  ]
+]);
+
+$response = curl_exec($curl);
+curl_close($curl);
+
+echo $response;
+?>
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 - Success
+{
+  "wallet_id": "wall_123",
+  "balance": 150.50,
+  "currency": "SLE"
+}
+```
+
+```json 401 - Unauthorized
+{
+  "detail": "Invalid application credentials"
+}
+```
+
+```json 404 - Not Found
+{
+  "detail": "Wallet not found"
+}
+```
+
+</ResponseExample>

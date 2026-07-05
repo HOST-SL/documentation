@@ -1,0 +1,164 @@
+---
+title: "Update User"
+api: "PUT /api/v1/users/{user_id}/"
+description: "Update an existing user's information"
+---
+
+## Endpoint
+
+```
+PUT /api/v1/users/{user_id}/
+```
+
+## Path Parameters
+
+<ParamField path="user_id" type="string" required>
+  The unique identifier of the user to update
+</ParamField>
+
+## Headers
+
+<ParamField header="api-key" type="string" required>
+  Your application API key
+</ParamField>
+
+<ParamField header="secret-key" type="string" required>
+  Your application secret key
+</ParamField>
+
+## Body Parameters
+
+<ParamField body="app_user_id" type="string" required>
+  The current user ID from your application. Note: This field is required but **cannot be changed** during update.
+</ParamField>
+
+<ParamField body="name" type="string" required>
+  Updated full name of the user
+</ParamField>
+
+<ParamField body="email" type="string">
+  Updated email address
+</ParamField>
+
+<ParamField body="username" type="string">
+  Updated username
+</ParamField>
+
+<ParamField body="phone_number" type="string" required>
+  Updated phone number
+</ParamField>
+
+<ParamField body="is_active" type="boolean">
+  Update whether the user account is active
+</ParamField>
+
+## Response
+
+<ResponseField name="id" type="string">
+  Unique identifier for the user
+</ResponseField>
+
+<ResponseField name="app_user_id" type="string">
+  The user ID from your application
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  User's updated full name
+</ResponseField>
+
+<ResponseField name="email" type="string">
+  User's updated email address
+</ResponseField>
+
+<ResponseField name="phone_number" type="string">
+  User's updated phone number
+</ResponseField>
+
+<ResponseField name="is_active" type="boolean">
+  Whether the user account is active
+</ResponseField>
+
+<ResponseField name="updated_at" type="string">
+  ISO 8601 timestamp of update
+</ResponseField>
+
+<RequestExample>
+
+```bash cURL
+curl --request PUT \
+  --url https://hpay-api.host-sl.com/api/v1/users/user_abc123/ \
+  --header 'api-key: YOUR_API_KEY' \
+  --header 'secret-key: YOUR_SECRET_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "app_user_id": "1",
+    "name": "John Updated Doe",
+    "email": "john.new@example.com",
+    "phone_number": "+23279123456"
+  }'
+```
+
+```python Python
+from hostpay import HostPay
+
+client = HostPay(api_key="YOUR_API_KEY", secret_key="YOUR_SECRET_KEY")
+
+user = client.users.update(
+    "user_abc123",
+    app_user_id="1",           # must match the existing value (immutable)
+    name="John Updated Doe",
+    email="john.new@example.com",
+    phone_number="+23279123456",
+)
+print(user["name"])
+```
+
+```typescript TypeScript
+import { HostPay } from "@hostpay/sdk";
+
+const client = new HostPay({ apiKey: "YOUR_API_KEY", secretKey: "YOUR_SECRET_KEY" });
+
+const user = await client.users.update("user_abc123", {
+  appUserId: "1", // must match the existing value (immutable)
+  name: "John Updated Doe",
+  email: "john.new@example.com",
+  phoneNumber: "+23279123456",
+});
+console.log(user.name);
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 - Success
+{
+  "id": "user_abc123",
+  "app_user_id": "1",
+  "name": "John Updated Doe",
+  "email": "john.new@example.com",
+  "phone_number": "+23279123456",
+  "is_active": true,
+  "updated_at": "2025-01-18T14:20:00Z"
+}
+```
+
+```json 400 - Bad Request
+{
+  "detail": "App user ID cannot be changed"
+}
+```
+
+```json 404 - Not Found
+{
+  "detail": "User not found"
+}
+```
+
+</ResponseExample>
+
+<Warning>
+  You must include the `app_user_id` in the request body, and it must match the
+  id assigned when the user was created. Changing this id will result in a 400 Bad
+  Request error.
+</Warning>
