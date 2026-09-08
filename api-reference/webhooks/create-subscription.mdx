@@ -6,6 +6,10 @@ description: "Subscribe an HTTPS endpoint to webhook events for your application
 
 Creates a webhook subscription. Deliveries are signed — verify them with the returned secret and the SDK's `construct_event` (see [Webhook security](/webhooks/security)).
 
+Review the [webhook safeguards upgrade notice](/webhooks/overview#upgrade-notice-webhook-safeguards).
+Successful subscription creation does not guarantee delivery: HTTPS is enforced
+for live events at send time, DNS is rechecked, and the signing secret must be usable.
+
 <Warning>
   The signing `secret` is returned **only in this response**. Store it securely —
   it cannot be retrieved again, only [rotated](/api-reference/webhooks/rotate-secret).
@@ -14,7 +18,9 @@ Creates a webhook subscription. Deliveries are signed — verify them with the r
 ### Request Body
 
 <ParamField body="target_url" type="string" required>
-  The HTTPS endpoint to deliver events to. Internal/private addresses are rejected.
+  The final public endpoint that accepts POST without redirecting. Live deliveries
+  require HTTPS and valid TLS; sandbox deliveries may use public HTTP. Internal
+  addresses, URL credentials and fragments are rejected. Redirects are not followed.
 </ParamField>
 
 <ParamField body="events" type="string[]" required>

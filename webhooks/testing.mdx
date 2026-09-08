@@ -3,40 +3,67 @@ title: "Testing Webhooks"
 description: "Validate your webhook endpoint before processing live events"
 ---
 
-Before relying on webhooks in production, confirm your endpoint receives deliveries and verifies signatures correctly.
+Before relying on webhooks in production, confirm your endpoint receives
+deliveries and verifies signatures. Review the [upgrade checklist](/webhooks/overview#upgrade-notice-webhook-safeguards)
+when moving to the webhook safeguards release.
 
-<CardGroup cols={2}>
-  <Card title="Test Mode" icon="flask">
-    All transactions made in Test Mode trigger real webhook deliveries to your
-    subscribed endpoint
-  </Card>
-  <Card title="test.ping Event" icon="satellite-dish">
-    Use the `test.ping` event from the dashboard to verify your endpoint is
-    reachable and responding correctly
-  </Card>
-</CardGroup>
+## Test your receiver
 
-## Sending a Test Event
+1. Configure a final public HTTPS URL that accepts POST directly, without a
+   redirect. For local development, use a public HTTPS tunnel; `localhost`,
+   private IPs and internal DNS destinations are blocked in both modes.
+2. Subscribe to the event for your sandbox payment or payout flow and securely
+   save the raw signing secret returned during setup.
+3. Run the flow using Test Mode credentials. Sandbox events make real HTTP
+   requests to your configured endpoint, so use a receiver that cannot trigger
+   production fulfillment during testing.
+4. Verify the [signature over the raw body](/webhooks/security), then durably
+   record the event before acknowledging it with a 2xx response.
+5. Make your handler idempotent using `X-HostPay-Delivery-Id` or `Idempotency-Key`.
+   The same delivery ID is reused on retries. Do not deduplicate solely on a
+   transaction ID: different state-change events can refer to the same transaction.
 
-<Steps>
-  <Step title="Subscribe in Test Mode">
-    Create a webhook subscription pointing at your endpoint while in Test Mode.
-  </Step>
-  <Step title="Send a test.ping">
-    From the dashboard, send a `test.ping` event to the subscription and confirm your endpoint returns a `200 OK`.
-  </Step>
-  <Step title="Verify the signature">
-    Confirm your handler validates the `X-HostPay-Signature` against the subscription's signing secret. See [Security](/webhooks/security).
-  </Step>
-  <Step title="Trigger a real flow">
-    Run a Test Mode payment or payout and confirm the matching event (e.g. `payment.succeeded`) is delivered and processed.
-  </Step>
-</Steps>
+## Inspect delivery status
 
-## Inspecting Deliveries
+The dashboard's **Webhooks → Delivery Log** shows the latest 50 delivery records
+for the selected application, not a separate row for every HTTP attempt. Refresh
+to update the snapshot. Open **View details** for processing time, next retry,
+last error, response code, latency and payload.
 
-You can view delivery history — status, response code, latency, and the payload — for every attempt from the **Delivery Log** in the dashboard's Webhooks section.
+- `pending`: waiting for the worker.
+- `processing`: claimed by a worker. `processing_started_at` can be null on legacy
+  records; clients must accept a nullable timestamp.
+- `failed` / **Retry pending**: an attempt failed; check `next_attempt_at`.
+- `delivered` / **Success**: the endpoint returned 2xx. This does not prove that
+  your application's downstream processing finished.
+- `dead` / **Stopped**: no more automatic retries. This can follow attempt
+  exhaustion or a missing/inactive subscription.
 
-<Tip>
-  Failed deliveries can be manually re-triggered from the dashboard. See [Overview](/webhooks/overview) for the automatic retry policy.
-</Tip>
+**Possibly stalled** flags pending/processing work or overdue retries delayed by
+at least five minutes, plus processing records missing their claim timestamp.
+A future retry is not stalled. The oldest pending age and counts cover only the
+displayed 50 records; an empty snapshot is not a global queue-health guarantee.
+
+## Diagnose failures
+
+- **Signing failed:** no HTTP request was sent for that attempt. Check the active
+  subscription secret and ask the operator to verify encryption configuration.
+  Do not disable signature verification. Rotate only when necessary and update
+  your receiver with the new raw secret.
+- **URL blocked:** use a public destination, remove URL credentials/fragments,
+  and use HTTPS for live events. A mixed public/private DNS answer is rejected.
+- **Redirect blocked:** configure the final URL, including its required trailing
+  slash. A 301, 302, 307 or 308 response is not followed.
+- **Connection failed:** check DNS, endpoint availability and TLS. A timeout may
+  happen after your receiver accepted a request; always handle duplicates.
+- **Pending with zero attempts:** ask the operator to check worker logs and the
+  read-only schema preflight. This is not proof that your receiver rejected it.
+
+Attempts include signing and destination checks, not just HTTP requests. An empty
+HTTP code means no endpoint response was recorded. The retry limit is **10 total
+attempts**; see [Retry policy](/webhooks/overview#retry-policy).
+
+Fix the cause before requesting another attempt. Manual dispatch rejects inactive,
+already delivered, dead or currently claimed deliveries with HTTP 409. Do not
+recreate a payment or payout to recover a missing notification; contact support
+to reconcile final deliveries safely.

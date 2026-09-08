@@ -10,6 +10,37 @@ Versions and dates follow the platform's internal release track.
 
 ---
 
+## [0.11.0] - 2026-09-08
+
+API release 0.11.0 keeps the `/api/v1` route prefix. These requirements apply when this release is
+deployed to your environment; no universal rollout date is implied.
+
+### Potentially breaking changes
+
+- Live webhook delivery requires public HTTPS with valid TLS. Redirects are
+  blocked, including trailing-slash and HTTP-to-HTTPS redirects.
+- Destination safety is checked again for every delivery. Private/internal
+  destinations, mixed public/private DNS answers and URL credentials are rejected.
+- Missing, inactive or unreadable signing secrets no longer fall back to unsigned
+  HTTP requests. Failures are recorded and follow the bounded retry policy.
+- Manual dispatch of an inactive subscription returns HTTP 409.
+
+### Response and dashboard changes
+
+- Delivery responses expose nullable `processing_started_at`. Clients must handle
+  the `processing` status and tolerate the new response field.
+- The dashboard distinguishes Processing, Retry pending and Stopped, shows errors
+  and attempt counts, and flags possibly stalled deliveries within the latest 50
+  records. These are snapshot counts, not global queue totals.
+- The retry limit is **10 total attempts**, including preparation failures. This
+  corrects earlier documentation that described 10 retries after the first attempt.
+
+The event payload format, payload version and HMAC signature format are unchanged.
+Read the [upgrade checklist](/webhooks/overview#upgrade-notice-webhook-safeguards)
+before deployment.
+
+---
+
 ## [0.10.0] - 2026-06-30
 
 ### Added

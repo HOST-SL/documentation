@@ -8,11 +8,32 @@ description: "Verify webhook signatures to protect against spoofed requests"
   step opens your application to spoofed requests.
 </Warning>
 
-## How Signatures Work
+## Compatibility: signing is required
+
+With the webhook safeguards release, HOST Pay no longer sends an unsigned
+webhook when signing fails. A missing, inactive or unreadable secret is recorded
+as a delivery error before HTTP is attempted. This rule applies to automatic and
+manual delivery, in both live and sandbox mode.
+
+Use the **raw webhook signing secret** returned when you create or rotate the
+subscription. This is separate from your API authentication secret. Do not use a
+stored hash or masked preview as the HMAC key, and do not hash the raw secret first.
+
+If the Delivery Log reports a signing error, contact your HOST Pay operator to
+check the encryption configuration. If rotation is necessary, save the new secret
+and update your receiver immediately; rotation changes the secret used for future
+attempts, including retries of older deliveries. There is no timed dual-signing
+grace period. Coordinate the change without disabling signature verification.
+
+See the [upgrade notice](/webhooks/overview#upgrade-notice-webhook-safeguards)
+for endpoint requirements. Requests to live endpoints verify the TLS certificate
+and hostname; self-signed or mismatched certificates will fail delivery.
+
+## How signatures work
 
 HOST Pay signs every outgoing webhook using **HMAC-SHA256**. The signing input is:
 
-```
+```text
 timestamp + "." + compact_json_body
 ```
 

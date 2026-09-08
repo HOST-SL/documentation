@@ -3,6 +3,41 @@ title: "Webhooks Overview"
 description: "Real-time event notifications from HOST Pay"
 ---
 
+## Upgrade notice: webhook safeguards
+
+These changes take effect when API release 0.11.0 is deployed to
+your environment. They are not a claim that every hosted environment has already
+been upgraded. Review your integration before rollout:
+
+- **Live deliveries require HTTPS** with a valid certificate for your endpoint's
+  hostname. Public HTTP endpoints are supported only for sandbox events.
+- **Redirects are no longer followed**, including HTTP-to-HTTPS and trailing-slash
+  redirects. Set `target_url` to the final URL that directly accepts a POST and
+  returns a 2xx response. You can change it using [Update subscription](/api-reference/webhooks/update-subscription).
+- **Destinations must resolve only to public addresses at delivery time.**
+  Private, loopback, link-local, shared, reserved and multicast addresses are
+  blocked. A mixed public/private DNS answer is rejected. URL credentials and
+  fragments are not supported. Use a public HTTPS tunnel for local testing.
+- **Unsigned fallback is removed.** Missing, inactive or unreadable signing
+  secrets prevent the HTTP request. Keep verifying signatures; do not disable
+  verification to work around a delivery error. See [Security](/webhooks/security).
+- **Delivery-status consumers must accept `processing`** alongside `pending`,
+  `delivered`, `failed` and `dead`. Delivery responses now include the optional,
+  nullable `processing_started_at` timestamp. Update strict response validators
+  to accept this additive field.
+- **Manual dispatch rejects inactive subscriptions with HTTP 409.** Delivered
+  and dead deliveries remain final; manual dispatch is not a way to revive them.
+
+The event payload format, `X-Webhook-Version`, signature algorithm and delivery-ID
+headers are unchanged by this release. You do not need to hash your API keys or
+webhook signing secret, change your payload version, or rotate a working secret
+just for this upgrade. Clients already using direct public HTTPS endpoints and
+valid signature verification generally need no receiver-code changes.
+
+Before going live, run a sandbox flow, confirm a 2xx delivery, verify the signature
+over the raw body, and confirm duplicate deliveries do not repeat your business
+operation. See [Testing webhooks](/webhooks/testing).
+
 ## What are Webhooks?
 
 Webhooks allow your application to receive real-time notifications when events occur in HOST Pay. Instead of polling the API, HOST Pay will send HTTP POST requests to your specified endpoint whenever a transaction or account event takes place.
@@ -54,7 +89,9 @@ Every webhook delivers a JSON body with this structure:
 The `status` field inside `data` reflects the outcome extracted from the event type (e.g., `succeeded`, `failed`, `created`). The `metadata` object carries any additional context attached to the event.
 
 <Note>
-  The event type itself (`payment.succeeded`, `payout.failed`, etc.) is identified by the `X-Webhook-Version` and event delivery headers, not an `event` field in the body.
+  `X-Webhook-Version` identifies the payload version, not the event type.
+  Do not assume every payload has a top-level `event` field; use the documented
+  payload for the events you subscribe to.
 </Note>
 
 ## Request Headers
@@ -89,8 +126,8 @@ Every webhook delivery includes these headers:
     Validate every incoming webhook's signature before processing it — see [Security](/webhooks/security)
   </Step>
   <Step title="Test">
-    Send a `test.ping` event from the dashboard and confirm your endpoint
-    receives it — see [Testing](/webhooks/testing)
+    Run a sandbox payment or payout and confirm your endpoint receives the
+    subscribed event — see [Testing](/webhooks/testing)
   </Step>
 </Steps>
 
@@ -104,7 +141,9 @@ Every webhook delivery includes these headers:
 {" "}
 
   <Accordion title="Handle Duplicates (Idempotency)">
-    The same event may be delivered more than once. Use the `X-HostPay-Delivery-Id` header or `data.id` to detect duplicates and skip re-processing.
+    The same delivery may arrive more than once. Use `X-HostPay-Delivery-Id` or
+    `Idempotency-Key` to deduplicate it. Do not deduplicate solely on a transaction
+    ID, because separate state-change events may refer to the same transaction.
   </Accordion>
 
 {" "}
@@ -116,7 +155,8 @@ Every webhook delivery includes these headers:
 {" "}
 
   <Accordion title="Use HTTPS Only">
-    Your endpoint must be served over HTTPS. HTTP endpoints will not receive webhooks.
+    Live events require HTTPS. Sandbox events may use public HTTP endpoints,
+    but HTTPS is recommended for both. Redirects are not followed.
   </Accordion>
 
 {" "}
@@ -126,7 +166,7 @@ Every webhook delivery includes these headers:
   </Accordion>
 
   <Accordion title="Test in Test Mode First">
-    Use Test Mode and the `test.ping` event to validate your endpoint before processing live events.
+    Use a Test Mode payment or payout to validate your endpoint before processing live events.
   </Accordion>
 </AccordionGroup>
 
@@ -134,12 +174,15 @@ Every webhook delivery includes these headers:
 
 If your endpoint returns a non-2xx status code or times out, HOST Pay retries the delivery automatically:
 
-- **Up to 10 retry attempts** after the initial delivery failure
-- **Exponential backoff**: the delay between attempts doubles each time, starting at **60 seconds** and capping at **30 minutes**
-- After all attempts are exhausted, the delivery is marked **failed** and no further retries occur
+- **Up to 10 total delivery attempts**, including the initial attempt, not 10 additional retries.
+- **Exponential backoff**: starts at **60 seconds**, doubles between attempts, adds up to **60 seconds of jitter**, and caps at **30 minutes**. Worker availability can delay an attempt further.
+- Signing and destination-validation failures also consume an attempt, even though no HTTP request is sent. An empty HTTP code means no endpoint response was recorded, not necessarily that no request reached the endpoint.
+- `failed` means a retry can be scheduled. After exhaustion, the delivery becomes **`dead`** (shown as **Stopped** in the dashboard) and no automatic retries occur.
 
 <Tip>
-  You can view delivery history and manually re-trigger failed webhooks from the HOST Pay dashboard.
+  Use the Delivery Log to inspect attempts, errors and the next retry time.
+  Correct the endpoint or signing configuration before retrying. Do not
+  recreate a payment to recover a missing webhook notification.
 </Tip>
 
 ## Next Steps

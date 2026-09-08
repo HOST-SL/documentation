@@ -6,6 +6,11 @@ description: "Update a webhook subscription — only the fields you send are cha
 
 Partial update: send only the fields to change. Use `active: false` to pause deliveries without deleting the subscription.
 
+An inactive subscription rejects manual dispatch with HTTP 409. The worker can
+mark its queued deliveries `dead`; reactivating the subscription does not revive
+final deliveries. Coordinate changes rather than using pause as a guaranteed
+way to preserve queued events.
+
 ### Path Parameters
 
 <ParamField path="subscription_id" type="string" required>
@@ -15,7 +20,9 @@ Partial update: send only the fields to change. Use `active: false` to pause del
 ### Request Body
 
 <ParamField body="target_url" type="string">
-  New delivery endpoint (HTTPS; internal/private addresses rejected).
+  Final public URL accepting POST without redirects. Live events require HTTPS
+  with valid TLS; sandbox events may use public HTTP. Destination safety is checked
+  on update and again on delivery. See the [upgrade checklist](/webhooks/overview#upgrade-notice-webhook-safeguards).
 </ParamField>
 
 <ParamField body="events" type="string[]">
