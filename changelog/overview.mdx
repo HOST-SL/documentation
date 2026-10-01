@@ -10,6 +10,39 @@ Versions and dates follow the platform's internal release track.
 
 ---
 
+## [0.12.0] - 2026-10-01
+
+This release includes payment concurrency, dashboard performance and atomic
+payment notifications. These changes apply only after release 0.12.0 is deployed
+to your environment; the release date does not imply a universal rollout.
+
+### Performance and compatibility
+
+- Blocking wallet/payment work runs outside the API event loop so slow provider
+  calls do not block unrelated requests. Provider response times and available
+  worker/database capacity still limit throughput.
+- Stripe requests use application-specific credentials without modifying a
+  process-global key. Your authentication headers and raw API keys are unchanged.
+- Dashboard analytics combine database queries while preserving response fields.
+- API routes remain under `/api/v1`; no new database migration is required.
+
+### Payment notifications
+
+- Payment handlers, reconciliation, transfers and escrow record outgoing events
+  and matching deliveries in the same database transaction as their local
+  financial changes. If event recording fails, those local changes roll back.
+  This cannot reverse money already moved by a payment provider.
+- Delivery remains asynchronous. The worker discovers committed deliveries on
+  its 30-second scheduled sweep; queue outages and retries can delay delivery.
+  Do not expect the webhook to arrive before the initiating API request returns.
+- Monime failed-deposit callbacks also record `payment.failed` events. Receivers
+  subscribed to this event or `payment.*` should handle the failure state.
+- Payload versions, signature verification and API routes are unchanged. Keep
+  deduplicating delivery IDs; this does not promise exactly-once HTTP delivery
+  or automatically recover historical missing notifications.
+
+---
+
 ## [0.11.0] - 2026-09-08
 
 API release 0.11.0 keeps the `/api/v1` route prefix. These requirements apply when this release is

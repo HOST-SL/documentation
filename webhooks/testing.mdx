@@ -27,7 +27,7 @@ when moving to the webhook safeguards release.
 
 The dashboard's **Webhooks → Delivery Log** shows the latest 50 delivery records
 for the selected application, not a separate row for every HTTP attempt. Refresh
-to update the snapshot. Open **View details** for processing time, next retry,
+to update the snapshot. Select an event row for processing time, next retry,
 last error, response code, latency and payload.
 
 - `pending`: waiting for the worker.
@@ -57,7 +57,9 @@ displayed 50 records; an empty snapshot is not a global queue-health guarantee.
 - **Connection failed:** check DNS, endpoint availability and TLS. A timeout may
   happen after your receiver accepted a request; always handle duplicates.
 - **Pending with zero attempts:** ask the operator to check worker logs and the
-  read-only schema preflight. This is not proof that your receiver rejected it.
+  read-only schema preflight. For API release 0.12.0 and later, also
+  confirm Celery Beat is scheduling the 30-second delivery sweep. This is not
+  proof that your receiver rejected it.
 
 Attempts include signing and destination checks, not just HTTP requests. An empty
 HTTP code means no endpoint response was recorded. The retry limit is **10 total
