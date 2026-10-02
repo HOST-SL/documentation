@@ -5,9 +5,8 @@ description: "Real-time event notifications from HOST Pay"
 
 ## Upgrade notice: webhook safeguards
 
-These changes take effect when API release 0.11.0 is deployed to
-your environment. They are not a claim that every hosted environment has already
-been upgraded. Review your integration before rollout:
+API release 0.11.0 introduces the following webhook security requirements.
+Ensure your integration meets them:
 
 - **Live deliveries require HTTPS** with a valid certificate for your endpoint's
   hostname. Public HTTP endpoints are supported only for sandbox events.
@@ -37,6 +36,28 @@ valid signature verification generally need no receiver-code changes.
 Before going live, run a sandbox flow, confirm a 2xx delivery, verify the signature
 over the raw body, and confirm duplicate deliveries do not repeat your business
 operation. See [Testing webhooks](/webhooks/testing).
+
+## Delivery concurrency and ordering
+
+API release 0.14.0 sends automatic webhooks in parallel. Each sweep selects at most
+50 deliveries and shares four concurrent senders per worker process, including
+across overlapping sweeps. More worker processes increase overall concurrency. Manual dispatch and
+retries can also overlap; this is not an ordering or exactly-once guarantee.
+
+Your receiver must accept concurrent requests and out-of-order events. Do not
+rely on the order of HTTP arrival to decide the latest transaction state or
+overwrite a final state with an older notification. Use event-specific state
+guards or retrieve the current transaction state when needed.
+
+Deduplicate `X-HostPay-Delivery-Id` (also supplied as `Idempotency-Key`) atomically,
+for example with a database unique constraint and the business update in the
+same transaction. A read-then-write check alone can process simultaneous duplicates
+twice. Payloads, signatures, delivery IDs and the ten-attempt retry policy are
+unchanged; exactly-once or ordered HTTP delivery is not guaranteed.
+
+Manual dispatch can return HTTP 409 if another sender recovered its claim while
+the request waited. Inspect the current Delivery Log before trying again; do not
+create another payment to recover a notification.
 
 ## What are Webhooks?
 

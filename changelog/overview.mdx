@@ -10,12 +10,46 @@ Versions and dates follow the platform's internal release track.
 
 ---
 
+## [0.14.0] - 2026-10-02
+
+This release improves payment processing and webhook delivery performance while
+preserving existing API routes, payloads and signatures.
+
+- Monime calls reuse HTTP connections within each worker execution context,
+  without retaining your application credentials or cookies in session defaults.
+  Timeouts, TLS verification and payment idempotency are unchanged; payment POSTs
+  are not automatically retried by this transport. No client changes are needed
+  for connection reuse.
+- Reconciliation uses bounded batches and an independent transaction per payment.
+  One failure no longer rolls back other payments. Financial changes and outgoing
+  notifications still commit together.
+- Reconciliation selects the correct live/test provider credentials and respects
+  existing payout reservations, avoiding a second debit for reserved payouts.
+  Reservations are released on confirmed provider failure, not an ambiguous
+  pending response.
+- Automatic webhook sweeps select at most 50 deliveries and share four senders
+  per worker process, including across overlapping sweeps. A slow client no
+  longer holds up every other delivery. More worker processes increase the
+  overall concurrency.
+- Automatic and manual results cannot overwrite a newer delivery claim.
+  Manual webhook dispatch can return HTTP 409 if its claim changed while the
+  request was waiting. Its delayed result cannot overwrite the newer claim.
+- API routes, payloads, signatures, response fields and the ten-attempt retry
+  policy are unchanged. No new migration or dependency is required.
+
+Your webhook receiver must accept concurrent requests, deduplicate delivery IDs
+atomically and protect transaction state from older notifications. Ordered
+or exactly-once HTTP delivery is not guaranteed.
+
+See [Delivery concurrency and ordering](/webhooks/overview#delivery-concurrency-and-ordering)
+for receiver guidance.
+
+---
+
 ## [0.13.0] - 2026-10-02
 
 This release includes optional pagination and backend compatibility cleanup.
-These changes apply only after release 0.13.0 is deployed to your environment;
-the release date does not imply a universal rollout. API routes remain under
-`/api/v1`, and webhook payload versions are unchanged.
+API routes remain under `/api/v1`, and webhook payload versions are unchanged.
 
 ### Pagination and compatibility
 
@@ -23,8 +57,8 @@ the release date does not imply a universal rollout. API routes remain under
   Existing calls without the new options still return arrays containing the full list.
 - Wallet sorting applies before pagination; optional summaries describe all
   matching records, with balances kept separate by currency.
-- The dashboard loads 50 records at a time. Deploy the updated wallet API before
-  the dashboard; the dashboard reports an upgrade error if summary headers are missing.
+- The dashboard loads 50 records at a time and reports a compatibility error if
+  the API does not provide the required summary headers.
 - No schema migration or new dependency is required. See [List users](/api-reference/users/list)
   and [List wallets](/api-reference/wallets/list) for parameters and compatibility.
 - Wallet transaction history also supports optional pages, full-history search
@@ -33,7 +67,7 @@ the release date does not imply a universal rollout. API routes remain under
 - Existing wallet-history calls retain their full-array ordering and empty-history
   HTTP 404. Opted-in reads return unique transactions and empty arrays when no
   matches remain. See [Wallet transactions](/api-reference/transactions/wallet-transactions)
-  for parameters, summary semantics and deployment order. SDK signatures are unchanged.
+  for parameters and summary semantics. SDK signatures are unchanged.
 
 ### Backend maintenance
 
@@ -48,8 +82,7 @@ the release date does not imply a universal rollout. API routes remain under
 ## [0.12.0] - 2026-10-01
 
 This release includes payment concurrency, dashboard performance and atomic
-payment notifications. These changes apply only after release 0.12.0 is deployed
-to your environment; the release date does not imply a universal rollout.
+payment notifications.
 
 ### Performance and compatibility
 
@@ -80,8 +113,7 @@ to your environment; the release date does not imply a universal rollout.
 
 ## [0.11.0] - 2026-09-08
 
-API release 0.11.0 keeps the `/api/v1` route prefix. These requirements apply when this release is
-deployed to your environment; no universal rollout date is implied.
+API release 0.11.0 keeps the `/api/v1` route prefix and strengthens webhook security.
 
 ### Potentially breaking changes
 
@@ -104,8 +136,8 @@ deployed to your environment; no universal rollout date is implied.
   corrects earlier documentation that described 10 retries after the first attempt.
 
 The event payload format, payload version and HMAC signature format are unchanged.
-Read the [upgrade checklist](/webhooks/overview#upgrade-notice-webhook-safeguards)
-before deployment.
+Review the [integration checklist](/webhooks/overview#upgrade-notice-webhook-safeguards)
+to ensure your webhook receiver meets these requirements.
 
 ---
 
