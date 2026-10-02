@@ -10,6 +10,41 @@ Versions and dates follow the platform's internal release track.
 
 ---
 
+## [0.13.0] - 2026-10-02
+
+This release includes optional pagination and backend compatibility cleanup.
+These changes apply only after release 0.13.0 is deployed to your environment;
+the release date does not imply a universal rollout. API routes remain under
+`/api/v1`, and webhook payload versions are unchanged.
+
+### Pagination and compatibility
+
+- You can opt into bounded pages and server-side search on user and wallet lists.
+  Existing calls without the new options still return arrays containing the full list.
+- Wallet sorting applies before pagination; optional summaries describe all
+  matching records, with balances kept separate by currency.
+- The dashboard loads 50 records at a time. Deploy the updated wallet API before
+  the dashboard; the dashboard reports an upgrade error if summary headers are missing.
+- No schema migration or new dependency is required. See [List users](/api-reference/users/list)
+  and [List wallets](/api-reference/wallets/list) for parameters and compatibility.
+- Wallet transaction history also supports optional pages, full-history search
+  and matching summary headers. The dashboard loads 50 newest-first transactions
+  with completed amounts separated by currency; summaries are not page-only totals.
+- Existing wallet-history calls retain their full-array ordering and empty-history
+  HTTP 404. Opted-in reads return unique transactions and empty arrays when no
+  matches remain. See [Wallet transactions](/api-reference/transactions/wallet-transactions)
+  for parameters, summary semantics and deployment order. SDK signatures are unchanged.
+
+### Backend maintenance
+
+- Deprecated Python typing aliases, SQLModel session calls, Pydantic declarations
+  and Stripe exception imports use their supported replacements. You do not need
+  to change your request bodies, authentication headers or stored API keys.
+- Existing environment variable names and migration history are unchanged; no
+  database migration or dependency upgrade is required for this release.
+
+---
+
 ## [0.12.0] - 2026-10-01
 
 This release includes payment concurrency, dashboard performance and atomic

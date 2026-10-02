@@ -6,7 +6,7 @@ description: "Retrieve all wallets for your application"
 
 ## Endpoint
 
-```
+```text
 GET /api/v1/wallets/
 ```
 
@@ -25,6 +25,45 @@ GET /api/v1/wallets/
 <ParamField query="is_active" type="boolean">
   Filter wallets by active status.
 </ParamField>
+
+<ParamField query="limit" type="number">
+  Opt into pagination: return at most 1–1000 wallets. Omit this parameter to keep
+  the existing full-list behavior.
+</ParamField>
+
+<ParamField query="offset" type="number" default="0">
+  Number of matching wallets to skip; must be zero or greater.
+</ParamField>
+
+<ParamField query="search" type="string">
+  Case-insensitive literal substring search across wallet ID, user ID, balance
+  text and currency. Maximum 200 characters; surrounding whitespace is ignored.
+  Search the full matching list, not just the returned page.
+</ParamField>
+
+<ParamField query="sort_by" type="string" default="created_at">
+  Sort by `created_at` or `balance` before slicing the page.
+</ParamField>
+
+<ParamField query="sort_direction" type="string" default="desc">
+  Sort `asc` or `desc`. ID ascending breaks ties.
+</ParamField>
+
+<ParamField query="include_summary" type="boolean" default="false">
+  Return X-Total-Count and X-Active-Count headers, plus X-Balance-By-Currency:
+  a JSON object containing decimal strings, such as `{"USD":"150.50","SLE":"25.00"}`.
+  Summaries cover all matching wallets after status/search filters, before pagination.
+  Different currencies are never added together.
+</ParamField>
+
+## Pagination compatibility
+
+The body remains an array. Use `?limit=50&offset=0&include_summary=true`, then
+increment `offset` by 50. An empty or out-of-range page returns `[]`. Records can
+change between requests; offset pages are not a snapshot or a bulk export.
+Invalid limits, negative offsets, invalid sort values or searches longer than
+200 characters return HTTP 422. Existing requests without the new options keep
+returning the full list. Deploy the wallet API update before the dashboard update.
 
 ## Response
 

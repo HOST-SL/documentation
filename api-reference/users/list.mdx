@@ -6,7 +6,7 @@ description: "Retrieve a list of users for your application"
 
 ## Endpoint
 
-```
+```text
 GET /api/v1/users/
 ```
 
@@ -25,6 +25,38 @@ GET /api/v1/users/
 <ParamField query="is_active" type="boolean">
   Filter users by their active status. If not provided, returns all users.
 </ParamField>
+
+<ParamField query="limit" type="number">
+  Opt into pagination: return at most 1–1000 users. Omit this parameter to keep
+  the existing full-list behavior.
+</ParamField>
+
+<ParamField query="offset" type="number" default="0">
+  Number of matching users to skip; must be zero or greater.
+</ParamField>
+
+<ParamField query="search" type="string">
+  Case-insensitive literal substring search across user ID, app_user_id, name,
+  email, phone and username. Maximum 200 characters; surrounding whitespace is
+  ignored. Search the full matching list, not just the returned page.
+</ParamField>
+
+<ParamField query="include_summary" type="boolean" default="false">
+  Return X-Total-Count and X-Active-Count response headers for the full matching
+  list, after status/search filters and before pagination.
+</ParamField>
+
+## Pagination compatibility
+
+The body remains an array, not a new pagination object. With `limit`, results
+are ordered by creation time descending, then ID descending to break ties.
+An empty or out-of-range page returns `[]`. Records can change between requests,
+so pagination is not a snapshot or a replacement for a bulk export.
+
+Use `?limit=50&offset=0&include_summary=true`, then increment `offset` by 50.
+Invalid limits, negative offsets or searches longer than 200 characters return
+HTTP 422. Existing requests without the new options remain full-list reads.
+Deploy the wallet API update before using these options in your dashboard.
 
 ## Response
 

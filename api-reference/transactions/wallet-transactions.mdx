@@ -1,7 +1,7 @@
 ---
 title: "Get Wallet Transactions"
 api: "GET /api/v1/transactions/wallet/{wallet_id}"
-description: "Retrieve all transactions for a specific wallet."
+description: "Retrieve wallet history with optional pagination, search and full matching totals."
 ---
 
 This endpoint returns all transactions where the specified wallet is either the sender or the recipient.
@@ -11,6 +11,70 @@ This endpoint returns all transactions where the specified wallet is either the 
 <ParamField path="wallet_id" type="string" required>
   The unique identifier of the wallet to fetch transactions for.
 </ParamField>
+
+### Query parameters
+
+<ParamField query="limit" type="number">
+  Return at most 1–1000 transactions. Omit this parameter for the existing full-history response.
+</ParamField>
+
+<ParamField query="offset" type="number" default="0">
+  Number of matching transactions to skip; must be zero or greater.
+</ParamField>
+
+<ParamField query="search" type="string">
+  Case-insensitive literal substring search across transaction ID, reference ID,
+  type, status and description. Maximum 200 characters; surrounding whitespace
+  is ignored. Search applies to the full history, not just the returned page.
+</ParamField>
+
+<ParamField query="include_summary" type="boolean" default="false">
+  Return X-Total-Count and X-Transaction-Summary headers describing all matching
+  transactions before pagination. The body remains an array.
+</ParamField>
+
+### Paging and compatibility
+
+Use `?limit=50&offset=0&include_summary=true`, then increment `offset` by 50.
+New-option reads are ordered by creation time descending, then ID descending.
+Each transaction appears once even when the wallet is both sender and recipient.
+Empty and out-of-range pages return HTTP 200 with `[]`.
+
+Requests without the new options retain the legacy full array, outgoing-then-incoming
+ordering and HTTP 404 for empty history. A legacy self-transfer can appear twice.
+Invalid limits, negative offsets and searches longer than 200 characters return
+HTTP 422. The API key still determines the application and live/test mode.
+Offset pages are not a snapshot: new transactions can shift records between requests.
+
+Existing SDK wallet-history methods keep their current signatures and behavior.
+To opt into paging now, send the query parameters over HTTP. Deploy the updated
+wallet API before the dashboard. No database migration is required.
+
+### Summary headers
+
+`X-Total-Count` counts unique matching transactions. `X-Transaction-Summary`
+contains JSON in this format:
+
+```json
+{
+  "sent": 120,
+  "received": 80,
+  "completed": 180,
+  "amounts_by_currency": {
+    "USD": { "sent": "150.50", "received": "25.00" },
+    "SLE": { "sent": "10.00", "received": "5.00" }
+  }
+}
+```
+
+Sent and received counts include every status. Amounts include only transactions
+whose current status is `completed`, as decimal strings in each original currency;
+they are transaction amounts, not net amounts after fees or converted balances.
+Never add different currencies together. A self-transfer counts once in the total
+and completed count, but once in each direction. Null currencies are labelled
+`UNKNOWN`. No matches produce zero counts and an empty `amounts_by_currency` object.
+Summary scans still cover matching history; the page limit bounds returned records,
+not all database work. Counts and rows can change between queries under concurrent writes.
 
 ### Response
 
@@ -72,6 +136,14 @@ curl --request GET \
   --url https://hpay-api.host-sl.com/api/v1/transactions/wallet/YOUR_WALLET_ID \
   --header 'api-key: YOUR_API_KEY' \
   --header 'secret-key: YOUR_SECRET_KEY'
+```
+
+```bash Paged history with totals
+curl --request GET \
+  --url 'https://hpay-api.host-sl.com/api/v1/transactions/wallet/YOUR_WALLET_ID?limit=50&offset=0&include_summary=true' \
+  --header 'api-key: YOUR_API_KEY' \
+  --header 'secret-key: YOUR_SECRET_KEY' \
+  --include
 ```
 
 ```python Python
